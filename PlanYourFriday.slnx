@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PlanYourFriday.Api/PlanYourFriday.Api.csproj" />
+    <Project Path="src/PlanYourFriday.Application/PlanYourFriday.Application.csproj" />
+    <Project Path="src/PlanYourFriday.Domain/PlanYourFriday.Domain.csproj" />
+    <Project Path="src/PlanYourFriday.Infrastructure/PlanYourFriday.Infrastructure.csproj" />
+    <Project Path="src/PlanYourFriday.Worker/PlanYourFriday.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PlanYourFriday.UnitTests/PlanYourFriday.UnitTests.csproj" />
+  </Folder>
+</Solution>

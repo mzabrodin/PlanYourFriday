@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 using Npgsql;
 
-using PlanYourFriday.Application.Common;
 using PlanYourFriday.Domain.Common;
 
 namespace PlanYourFriday.Api.ErrorHandling;
@@ -52,7 +51,7 @@ internal sealed partial class GlobalExceptionHandler(
         return exception switch
         {
             BadHttpRequestException e => (e.StatusCode, null, e.Message),
-            UnauthenticatedException e => (StatusCodes.Status401Unauthorized, null, e.Message),
+            UnauthenticatedException e => (StatusCodes.Status401Unauthorized, e.Code, e.Message),
             AccessDeniedException e => (StatusCodes.Status403Forbidden, e.Code, e.Message),
             EntityNotFoundException e => (StatusCodes.Status404NotFound, e.Code, e.Message),
             InvalidStateException e => (StatusCodes.Status409Conflict, e.Code, e.Message),

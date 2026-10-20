@@ -42,6 +42,20 @@ jobs:
       - name: Test
         run: dotnet test PlanYourFriday.slnx -c Release --no-build --logger trx --results-directory TestResults
 
+      - name: Restore tools
+        run: dotnet tool restore
+
+      - name: Check migrations are up to date
+        env:
+          # The design-time host needs the Development connection string; no database is contacted
+          ASPNETCORE_ENVIRONMENT: Development
+        run: >-
+          dotnet ef migrations has-pending-model-changes
+          --project src/PlanYourFriday.Infrastructure
+          --startup-project src/PlanYourFriday.Api
+          --configuration Release
+          --no-build
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7

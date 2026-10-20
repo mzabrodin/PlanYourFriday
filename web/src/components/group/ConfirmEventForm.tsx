@@ -40,11 +40,15 @@ export function ConfirmEventForm({ group, time, onCancel }: { group: GroupDto; t
         <input required value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Address or place" />
       </label>
       <label>
-        Meeting link <span className="muted">(optional)</span>
+        <span>
+          Meeting link <span className="optional">(optional)</span>
+        </span>
         <input type="url" value={meetingLink} onChange={(e) => setMeetingLink(e.target.value)} placeholder="https://" />
       </label>
       <label>
-        Notes <span className="muted">(optional)</span>
+        <span>
+          Notes <span className="optional">(optional)</span>
+        </span>
         <textarea
           rows={3}
           value={description}

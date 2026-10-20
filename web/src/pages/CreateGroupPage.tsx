@@ -67,7 +67,9 @@ export function CreateGroupPage() {
         </label>
 
         <label>
-          Description <span className="muted">(optional)</span>
+          <span>
+            Description <span className="optional">(optional)</span>
+          </span>
           <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
         </label>
 
@@ -98,7 +100,9 @@ export function CreateGroupPage() {
             </select>
           </label>
           <label>
-            Availability deadline <span className="muted">(optional)</span>
+            <span>
+              Availability deadline <span className="optional">(optional)</span>
+            </span>
             <input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
           </label>
         </div>

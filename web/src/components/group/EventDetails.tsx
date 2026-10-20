@@ -216,11 +216,15 @@ function EditEventForm({ group, event, onDone }: { group: GroupDto; event: Event
         <input required value={location} onChange={(e) => setLocation(e.target.value)} />
       </label>
       <label>
-        Meeting link <span className="muted">(optional)</span>
+        <span>
+          Meeting link <span className="optional">(optional)</span>
+        </span>
         <input type="url" value={meetingLink} onChange={(e) => setMeetingLink(e.target.value)} placeholder="https://" />
       </label>
       <label>
-        Notes <span className="muted">(optional)</span>
+        <span>
+          Notes <span className="optional">(optional)</span>
+        </span>
         <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
       </label>
       <p className="hint">Changes are sent to everyone's calendar. To change the time, cancel and pick a new one.</p>

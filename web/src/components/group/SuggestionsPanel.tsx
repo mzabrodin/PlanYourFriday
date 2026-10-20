@@ -133,7 +133,9 @@ function StartVote({ group, options }: { group: GroupDto; options: TimeRange[] }
   return (
     <div className="start-vote">
       <label>
-        Voting closes <span className="muted">(optional)</span>
+        <span>
+          Voting closes <span className="optional">(optional)</span>
+        </span>
         <input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
       </label>
       <InlineError error={start.error} />

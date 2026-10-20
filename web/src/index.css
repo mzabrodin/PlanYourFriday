@@ -3448,3 +3448,13 @@ div.suggestion-row {
 .personal-calendar .pc-mine {
   background: color-mix(in srgb, var(--mine) 75%, var(--surface)) !important;
 }
+
+.optional {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+input:not([type='checkbox']):not([type='radio']),
+select {
+  height: 42px;
+}

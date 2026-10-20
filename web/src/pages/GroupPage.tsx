@@ -202,8 +202,11 @@ function PhaseSteps({ status }: { status: GroupDto['status'] }) {
     <ol className="phase-steps" aria-label="Planning progress">
       {PHASES.map((p, i) => (
         <li key={p.key} className={i < current ? 'done' : i === current ? 'current' : ''} aria-current={i === current ? 'step' : undefined}>
-          <span className="phase-dot">{i < current ? <Check size={12} aria-hidden="true" /> : i + 1}</span>
-          {p.label}
+          <span className="phase-pill">
+            <span className="phase-dot">{i < current ? <Check size={12} aria-hidden="true" /> : i + 1}</span>
+            {p.label}
+          </span>
+          {i < PHASES.length - 1 && <span className="phase-line" aria-hidden="true" />}
         </li>
       ))}
     </ol>

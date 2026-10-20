@@ -2368,12 +2368,16 @@ select:focus {
   padding: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
   flex-wrap: wrap;
-  counter-reset: none;
+  row-gap: 8px;
 }
 
 .phase-steps li {
+  display: flex;
+  align-items: center;
+}
+
+.phase-pill {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2386,17 +2390,16 @@ select:focus {
   font-weight: 600;
 }
 
-.phase-steps li:not(:last-child)::after {
-  content: '';
-  width: 18px;
+.phase-line {
+  width: 28px;
   height: 2px;
-  margin-left: 6px;
-  margin-right: -22px;
+  margin: 0 8px;
+  border-radius: 1px;
   background: var(--border);
 }
 
-.phase-steps li:not(:last-child) {
-  margin-right: 16px;
+.phase-steps .done .phase-line {
+  background: var(--ok);
 }
 
 .phase-dot {
@@ -2409,7 +2412,7 @@ select:focus {
   font-size: 0.75rem;
 }
 
-.phase-steps .current {
+.phase-steps .current .phase-pill {
   color: var(--text);
   border-color: var(--primary);
 }
@@ -3399,11 +3402,11 @@ div.suggestion-row {
     gap: 10px;
   }
 
-  .phase-steps li:not(:last-child) {
-    margin-right: 0;
+  .phase-steps {
+    gap: 6px;
   }
 
-  .phase-steps li:not(:last-child)::after {
+  .phase-line {
     display: none;
   }
 

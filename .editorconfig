@@ -225,6 +225,17 @@ dotnet_diagnostic.IDE1006.severity = warning
 dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.CA1873.severity = none
 
+# C#-only codebase: names like Event clash only with keywords of other .NET languages (e.g. VB)
+dotnet_diagnostic.CA1716.severity = none
+
+# EF Core migrations are generated code: skip analyzers and formatting
+[**/Migrations/*.cs]
+generated_code = true
+
+# Test names use the Method_ExpectedBehavior convention
+[tests/**.cs]
+dotnet_diagnostic.CA1707.severity = none
+
 #### Naming styles ####
 [*.{cs,vb}]
 

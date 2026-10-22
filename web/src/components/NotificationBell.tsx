@@ -4,8 +4,11 @@ import {
   CalendarX,
   CheckCheck,
   Hourglass,
+  Lightbulb,
   Mail,
   Pencil,
+  Trophy,
+  UserCheck,
   UserPlus,
   Vote,
   type LucideIcon,
@@ -24,6 +27,16 @@ const KINDS: Record<NotificationKind, { Icon: LucideIcon; tone: string; text: (n
   EVENT_CONFIRMED: { Icon: CalendarCheck, tone: 'ok', text: (n) => `${n.groupTitle} is on! ${n.actorName} confirmed the time` },
   EVENT_UPDATED: { Icon: Pencil, tone: 'info', text: (n) => `${n.actorName} updated the details of ${n.groupTitle}` },
   EVENT_CANCELLED: { Icon: CalendarX, tone: 'danger', text: (n) => `${n.actorName} cancelled ${n.groupTitle}` },
+  FRIEND_REQUEST: { Icon: UserPlus, tone: 'info', text: (n) => `${n.actorName} wants to be your friend` },
+  FRIEND_ACCEPTED: { Icon: UserCheck, tone: 'ok', text: (n) => `You and ${n.actorName} are now friends` },
+  POLL_STARTED: { Icon: Lightbulb, tone: 'vote', text: (n) => `${n.actorName} asks: ${n.pollTitle}` },
+  POLL_CLOSED: { Icon: Trophy, tone: 'ok', text: (n) => `The results are in: ${n.pollTitle}` },
+}
+
+function notificationTarget(n: NotificationDto): string {
+  if (n.groupId) return `/groups/${n.groupId}`
+  if (n.pollId) return `/ideas/${n.pollId}`
+  return '/friends'
 }
 
 export function NotificationBell() {
@@ -52,7 +65,7 @@ export function NotificationBell() {
   function openNotification(n: NotificationDto) {
     if (!n.read) markRead.mutate([n.id])
     setOpen(false)
-    navigate(`/groups/${n.groupId}`)
+    navigate(notificationTarget(n))
   }
 
   return (

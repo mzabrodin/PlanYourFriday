@@ -1,7 +1,8 @@
 import { ArrowLeft } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { useCreateGroup, usePrefs } from '../api/queries'
+import { useCreateGroup, useFriends, useMe, usePoll, usePrefs } from '../api/queries'
+import { FriendPicker } from '../components/friends/FriendPicker'
 import { InlineError } from '../components/States'
 import { fromLocalInput, toLocalInput } from '../lib/time'
 
@@ -28,6 +29,18 @@ export function CreateGroupPage() {
   const [duration, setDuration] = useState(prefs.defaultEventDurationMinutes)
   const [deadline, setDeadline] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
+  const pollId = params.get('poll')
+  const poll = usePoll(pollId)
+  const friends = useFriends()
+  const { data: me } = useMe()
+  const [members, setMembers] = useState<string[]>([])
+  const [preselectedFrom, setPreselectedFrom] = useState<string | null>(null)
+
+  const friendIds = new Set(friends.data?.friends.map((f) => f.userId))
+  if (poll.data && friends.data && preselectedFrom !== poll.data.id) {
+    setPreselectedFrom(poll.data.id)
+    setMembers(poll.data.participants.map((p) => p.userId).filter((id) => id !== me?.id && friendIds.has(id)))
+  }
 
   function submit(e: FormEvent) {
     e.preventDefault()
@@ -48,6 +61,8 @@ export function CreateGroupPage() {
         window: { start: fromLocalInput(window.start), end: fromLocalInput(window.end) },
         eventDurationMinutes: duration,
         availabilityDeadline: deadline ? fromLocalInput(deadline) : null,
+        memberIds: members,
+        pollId: poll.data ? poll.data.id : null,
       },
       { onSuccess: (group) => navigate(`/groups/${group.id}`) },
     )
@@ -59,6 +74,11 @@ export function CreateGroupPage() {
         <ArrowLeft size={16} aria-hidden="true" /> My groups
       </Link>
       <h1>New group</h1>
+      {poll.data && (
+        <p className="notice">
+          From the poll "{poll.data.title}". Friends who voted are already added.
+        </p>
+      )}
 
       <form className="card form" onSubmit={submit}>
         <label>
@@ -106,6 +126,22 @@ export function CreateGroupPage() {
             <input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
           </label>
         </div>
+
+        <fieldset>
+          <legend>
+            Invite friends <span className="optional">(optional)</span>
+          </legend>
+          {friends.data && friends.data.friends.length > 0 ? (
+            <>
+              <p className="hint">They join right away. You can also share an invite link later.</p>
+              <FriendPicker friends={friends.data.friends} selected={members} onChange={setMembers} label="Friends to invite" />
+            </>
+          ) : (
+            <p className="hint">
+              No friends yet. <Link to="/friends">Add friends</Link> or share the invite link after creating the group.
+            </p>
+          )}
+        </fieldset>
 
         {formError && <p className="inline-error">{formError}</p>}
         <InlineError error={create.error} />

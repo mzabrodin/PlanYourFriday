@@ -1,6 +1,6 @@
 import { ArrowRight, Plus, RotateCcw, Shuffle, X } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { WHEEL_COLORS } from '../lib/colors'
 
 const STORAGE_KEY = 'pyf-wheel-ideas'
@@ -34,16 +34,28 @@ function saveIdeas(ideas: string[]) {
   } catch {}
 }
 
+function ideasFromParams(params: URLSearchParams): string[] | null {
+  const raw = [...params.getAll('option'), ...(params.get('options')?.split(',') ?? [])]
+  const ideas = [...new Map(raw.map((s) => s.trim().slice(0, 40)).filter(Boolean).map((s) => [s.toLowerCase(), s])).values()]
+  return ideas.length >= MIN_IDEAS ? ideas.slice(0, MAX_IDEAS) : null
+}
+
 const prefersReducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 
 export function WheelPage() {
-  const [ideas, setIdeas] = useState(loadIdeas)
+  const [params] = useSearchParams()
+  const [tie] = useState(() => ideasFromParams(params))
+  const pollId = tie ? params.get('poll') : null
+  const [fromTie, setFromTie] = useState(tie !== null)
+  const [ideas, setIdeas] = useState(() => tie ?? loadIdeas())
   const [rotation, setRotation] = useState(0)
   const [spinning, setSpinning] = useState(false)
   const [result, setResult] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
 
-  useEffect(() => saveIdeas(ideas), [ideas])
+  useEffect(() => {
+    if (!fromTie) saveIdeas(ideas)
+  }, [ideas, fromTie])
 
   const slice = 360 / ideas.length
 
@@ -78,8 +90,10 @@ export function WheelPage() {
   return (
     <div className="wheel-page">
       <header className="wheel-intro">
-        <h1>No idea what to do?</h1>
-        <p className="lead">Spin the Friday wheel and let fate pick the plan.</p>
+        <h1>{fromTie ? "It's a tie!" : 'No idea what to do?'}</h1>
+        <p className="lead">
+          {fromTie ? 'Your friends voted equally. Let the wheel break the tie.' : 'Spin the Friday wheel and let fate pick the plan.'}
+        </p>
       </header>
 
       <div className="wheel-layout">
@@ -132,7 +146,10 @@ export function WheelPage() {
               <>
                 <p className="eyebrow">This Friday:</p>
                 <p className="wheel-result-title">{result}</p>
-                <Link to={`/groups/new?title=${encodeURIComponent(result)}`} className="btn btn-primary">
+                <Link
+                  to={`/groups/new?title=${encodeURIComponent(result)}${fromTie && pollId ? `&poll=${encodeURIComponent(pollId)}` : ''}`}
+                  className="btn btn-primary"
+                >
                   Plan it with friends <ArrowRight size={16} aria-hidden="true" />
                 </Link>
                 <button type="button" className="link-button small" onClick={spin} disabled={spinning}>
@@ -151,6 +168,7 @@ export function WheelPage() {
                 type="button"
                 className="link-button small icon-line"
                 onClick={() => {
+                  setFromTie(false)
                   setIdeas(DEFAULT_IDEAS)
                   setResult(null)
                 }}
@@ -191,7 +209,7 @@ export function WheelPage() {
                 <Plus size={16} aria-hidden="true" /> Add
               </button>
             </form>
-            <p className="hint">Saved in this browser.</p>
+            <p className="hint">{fromTie ? 'Tied options from your poll. Reset to get your own list back.' : 'Saved in this browser.'}</p>
           </section>
         </aside>
       </div>

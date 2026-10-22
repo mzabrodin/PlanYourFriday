@@ -1,7 +1,9 @@
-import { Check, Copy, Crown, Send } from 'lucide-react'
+import { Check, Copy, Crown, Send, UserPlus } from 'lucide-react'
+import { Link } from 'react-router'
 import { useState, type FormEvent } from 'react'
 import type { GroupDto } from '../api'
-import { useInvite, useRevokeInvitation } from '../api/queries'
+import { useAddMembers, useFriends, useInvite, useRevokeInvitation } from '../api/queries'
+import { FriendPicker } from './friends/FriendPicker'
 import { Card, InlineError, StatusBadge } from './States'
 import { UserAvatar } from './UserAvatar'
 
@@ -10,6 +12,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export function MembersPanel({ group }: { group: GroupDto }) {
   const isOrganizer = group.myRole === 'ORGANIZER'
   const canInvite = isOrganizer && group.status === 'PLANNING'
+  const canAddFriends = isOrganizer && (group.status === 'PLANNING' || group.status === 'VOTING')
   const ready = group.members.filter((m) => m.hasAvailability).length
   const showReadiness = group.status === 'PLANNING' || group.status === 'VOTING'
 
@@ -42,10 +45,45 @@ export function MembersPanel({ group }: { group: GroupDto }) {
         ))}
       </ul>
 
+      {canAddFriends && <AddFriends group={group} />}
       {canInvite && group.inviteToken && <InviteLink token={group.inviteToken} />}
       {canInvite && <InviteByEmail groupId={group.id} />}
       {isOrganizer && group.invitations.length > 0 && <Invitations group={group} />}
     </Card>
+  )
+}
+
+function AddFriends({ group }: { group: GroupDto }) {
+  const { data } = useFriends()
+  const add = useAddMembers(group.id)
+  const [selected, setSelected] = useState<string[]>([])
+  if (!data) return null
+  const available = data.friends.filter((f) => !group.members.some((m) => m.userId === f.userId))
+
+  return (
+    <div className="subsection">
+      <h3>Add friends</h3>
+      {available.length === 0 ? (
+        <p className="hint">
+          {data.friends.length === 0 ? 'No friends yet. ' : 'All your friends are here already. '}
+          <Link to="/friends">Find more friends</Link>
+        </p>
+      ) : (
+        <>
+          <FriendPicker friends={available} selected={selected} onChange={setSelected} label="Friends to add" />
+          <button
+            type="button"
+            className="btn add-friends-btn"
+            disabled={selected.length === 0 || add.isPending}
+            onClick={() => add.mutate(selected, { onSuccess: () => setSelected([]) })}
+          >
+            <UserPlus size={16} aria-hidden="true" />
+            {add.isPending ? 'Adding…' : selected.length > 1 ? `Add ${selected.length} friends` : 'Add to group'}
+          </button>
+        </>
+      )}
+      <InlineError error={add.error} />
+    </div>
   )
 }
 

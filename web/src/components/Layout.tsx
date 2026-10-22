@@ -1,8 +1,9 @@
 import { CalendarCheck } from 'lucide-react'
-import { Link, NavLink, Outlet } from 'react-router'
+import { useEffect } from 'react'
+import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { api, usingMocks } from '../api'
 import { resetMockDb } from '../api/mockApi'
-import { useDisconnectCalendar, useLogout, useMe } from '../api/queries'
+import { useDisconnectCalendar, useFriends, useLogout, useMe, usePolls } from '../api/queries'
 import { NotificationBell } from './NotificationBell'
 import { UserAvatar } from './UserAvatar'
 
@@ -10,6 +11,16 @@ export function Layout() {
   const { data: me } = useMe()
   const logout = useLogout()
   const disconnect = useDisconnectCalendar()
+  const signedIn = !!me
+  const friends = useFriends(signedIn)
+  const polls = usePolls(signedIn)
+  const incoming = friends.data?.incoming.length ?? 0
+  const pendingVotes = polls.data?.filter((p) => p.myVotePending).length ?? 0
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    document.querySelector('.tabs a.active')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  }, [pathname, signedIn])
 
   return (
     <div className="app">
@@ -39,7 +50,15 @@ export function Layout() {
               <NavLink to="/groups" end>
                 Groups
               </NavLink>
+              <NavLink to="/ideas">
+                Ideas
+                <NavCount count={pendingVotes} label="polls waiting for your vote" />
+              </NavLink>
               <NavLink to="/calendar">Calendar</NavLink>
+              <NavLink to="/friends">
+                Friends
+                <NavCount count={incoming} label="friend requests" />
+              </NavLink>
               <NavLink to="/wheel">Wheel</NavLink>
             </nav>
           )}
@@ -82,5 +101,14 @@ export function Layout() {
         <Outlet />
       </main>
     </div>
+  )
+}
+
+function NavCount({ count, label }: { count: number; label: string }) {
+  if (count === 0) return null
+  return (
+    <span className="nav-count" aria-label={`${count} ${label}`}>
+      {count > 9 ? '9+' : count}
+    </span>
   )
 }

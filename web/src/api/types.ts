@@ -12,6 +12,7 @@ export type EventStatus = 'CONFIRMED' | 'CANCELLED'
 export interface UserDto {
   id: string
   email: string
+  username: string
   displayName: string
   photoUrl: string | null
   timeZone: string
@@ -20,6 +21,7 @@ export interface UserDto {
 
 export interface UpdateProfileRequest {
   displayName: string
+  username: string
   timeZone: string
 }
 
@@ -177,6 +179,8 @@ export interface CreateGroupRequest {
   window: TimeRange
   eventDurationMinutes: number
   availabilityDeadline: string | null
+  memberIds?: string[]
+  pollId?: string | null
 }
 
 export interface ConfirmEventRequest {
@@ -195,12 +199,18 @@ export type NotificationKind =
   | 'EVENT_CONFIRMED'
   | 'EVENT_UPDATED'
   | 'EVENT_CANCELLED'
+  | 'FRIEND_REQUEST'
+  | 'FRIEND_ACCEPTED'
+  | 'POLL_STARTED'
+  | 'POLL_CLOSED'
 
 export interface NotificationDto {
   id: string
   kind: NotificationKind
-  groupId: string
-  groupTitle: string
+  groupId: string | null
+  groupTitle: string | null
+  pollId: string | null
+  pollTitle: string | null
   actorName: string | null
   createdAt: string
   read: boolean
@@ -219,4 +229,97 @@ export interface CalendarItemDto {
   people: string[]
   organizerName: string
   groupStatus: GroupStatus
+}
+
+export type Relation = 'SELF' | 'NONE' | 'FRIEND' | 'REQUEST_SENT' | 'REQUEST_RECEIVED'
+
+export interface PersonDto {
+  userId: string
+  displayName: string
+  username: string
+  relation: Relation
+}
+
+export interface FriendDto {
+  userId: string
+  displayName: string
+  username: string
+  email: string
+  since: string
+}
+
+export interface FriendRequestDto {
+  id: string
+  person: PersonDto
+  direction: 'INCOMING' | 'OUTGOING'
+  createdAt: string
+}
+
+export interface FriendSuggestionDto {
+  person: PersonDto
+  sharedGroups: string[]
+}
+
+export interface FriendsOverviewDto {
+  friends: FriendDto[]
+  incoming: FriendRequestDto[]
+  outgoing: FriendRequestDto[]
+  suggestions: FriendSuggestionDto[]
+  friendCode: string
+}
+
+export type PollStatus = 'OPEN' | 'CLOSED'
+
+export interface PollPersonDto {
+  userId: string
+  displayName: string
+}
+
+export interface PollOptionDto {
+  id: string
+  title: string
+  addedById: string
+  voterIds: string[]
+}
+
+export interface PollDto {
+  id: string
+  title: string
+  description: string | null
+  creatorId: string
+  creatorName: string
+  status: PollStatus
+  deadline: string | null
+  multipleChoice: boolean
+  allowNewOptions: boolean
+  participants: PollPersonDto[]
+  options: PollOptionDto[]
+  winnerOptionIds: string[]
+  groupId: string | null
+  createdAt: string
+}
+
+export interface PollSummaryDto {
+  id: string
+  title: string
+  creatorName: string
+  status: PollStatus
+  deadline: string | null
+  participantCount: number
+  votedCount: number
+  optionCount: number
+  myVotePending: boolean
+  leadingOptions: string[]
+  groupId: string | null
+  createdAt: string
+}
+
+export interface CreatePollRequest {
+  title: string
+  description: string | null
+  participantIds: string[]
+  options: string[]
+  deadline: string | null
+  multipleChoice: boolean
+  allowNewOptions: boolean
 }

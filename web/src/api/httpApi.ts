@@ -14,7 +14,10 @@ export const httpApi: Api = {
       throw e
     }
   },
-  startLogin: (returnTo) => window.location.assign(`/api/auth/login/google?${returnParam(returnTo)}`),
+  startLogin: (returnTo) =>
+    window.location.assign(
+      `/api/auth/login/google?${returnParam(returnTo)}&tz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}`,
+    ),
   logout: () => request('/auth/logout', { method: 'POST' }),
   logoutEverywhere: () => request('/auth/logout-all', { method: 'POST' }),
 
@@ -60,4 +63,23 @@ export const httpApi: Api = {
 
   getNotifications: () => request('/notifications'),
   markNotificationsRead: (ids) => request('/notifications/read', { method: 'POST', body: json({ ids: ids ?? null }) }),
+
+  getFriends: () => request('/friends'),
+  searchPeople: (query) => request(`/people?q=${encodeURIComponent(query)}`),
+  getPersonByCode: (code) => request(`/people/by-code/${encodeURIComponent(code)}`),
+  addFriendByCode: (code) => request(`/friends/by-code/${encodeURIComponent(code)}`, { method: 'POST' }),
+  sendFriendRequest: (userId) => request('/friends/requests', { method: 'POST', body: json({ userId }) }),
+  acceptFriendRequest: (requestId) => request(`/friends/requests/${requestId}/accept`, { method: 'POST' }),
+  removeFriendRequest: (requestId) => request(`/friends/requests/${requestId}`, { method: 'DELETE' }),
+  removeFriend: (userId) => request(`/friends/${userId}`, { method: 'DELETE' }),
+  regenerateFriendCode: () => request('/me/friend-code', { method: 'POST' }),
+  addMembers: (groupId, userIds) => request(`/groups/${groupId}/members`, { method: 'POST', body: json({ userIds }) }),
+
+  listPolls: () => request('/polls'),
+  getPoll: (pollId) => request(`/polls/${pollId}`),
+  createPoll: (body) => request('/polls', { method: 'POST', body: json(body) }),
+  addPollOption: (pollId, title) => request(`/polls/${pollId}/options`, { method: 'POST', body: json({ title }) }),
+  votePoll: (pollId, optionIds) => request(`/polls/${pollId}/votes`, { method: 'PUT', body: json({ optionIds }) }),
+  closePoll: (pollId) => request(`/polls/${pollId}/close`, { method: 'POST' }),
+  deletePoll: (pollId) => request(`/polls/${pollId}`, { method: 'DELETE' }),
 }

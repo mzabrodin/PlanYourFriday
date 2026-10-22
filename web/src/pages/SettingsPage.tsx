@@ -82,8 +82,11 @@ export function SettingsPage() {
 
 interface ProfileDraft {
   displayName: string
+  username: string
   timeZone: string
 }
+
+const USERNAME_RE = /^[a-z0-9_.]{3,30}$/
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 
@@ -96,7 +99,7 @@ function SettingsForm({
   settings: UserSettingsDto
   connection: CalendarConnectionDto | null
 }) {
-  const savedProfile: ProfileDraft = { displayName: user.displayName, timeZone: user.timeZone }
+  const savedProfile: ProfileDraft = { displayName: user.displayName, username: user.username, timeZone: user.timeZone }
   const savedConnection: UpdateCalendarConnectionRequest | null = connection && {
     busyCalendarIds: connection.busyCalendarIds,
     writeCalendarId: connection.writeCalendarId,
@@ -116,6 +119,10 @@ function SettingsForm({
   const dirty = profileDirty || prefsDirty || calendarsDirty
   const saving = updateProfile.isPending || updateSettings.isPending || updateConnection.isPending
   const nameError = profile.displayName.trim() === '' ? 'Name cannot be empty' : null
+  const usernameError = USERNAME_RE.test(profile.username)
+    ? null
+    : 'Use 3–30 lowercase letters, numbers, _ or .'
+  const formError = nameError ?? usernameError
 
   const connectionKey = connection ? `${connection.id}:${connection.status}` : 'none'
   const [lastConnectionKey, setLastConnectionKey] = useState(connectionKey)
@@ -151,9 +158,9 @@ function SettingsForm({
   }
 
   async function save() {
-    if (nameError) return
+    if (formError) return
     await Promise.allSettled([
-      profileDirty && updateProfile.mutateAsync({ displayName: profile.displayName.trim(), timeZone: profile.timeZone }),
+      profileDirty && updateProfile.mutateAsync({ displayName: profile.displayName.trim(), username: profile.username, timeZone: profile.timeZone }),
       prefsDirty && updateSettings.mutateAsync(prefs),
       calendarsDirty && connection && calendars && updateConnection.mutateAsync({ id: connection.id, body: calendars }),
     ])
@@ -210,6 +217,22 @@ function SettingsForm({
                 aria-invalid={!!nameError}
               />
               {nameError && <p className="inline-error">{nameError}</p>}
+            </SettingRow>
+
+            <SettingRow title="Username" description="Friends can find you by it. Lowercase letters, numbers, _ and ." htmlFor="username">
+              <div className="prefixed-input">
+                <span aria-hidden="true">@</span>
+                <input
+                  id="username"
+                  maxLength={30}
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={profile.username}
+                  onChange={(e) => setProfile({ ...profile, username: e.target.value.toLowerCase().replace(/\s/g, '') })}
+                  aria-invalid={!!usernameError}
+                />
+              </div>
+              {usernameError && <p className="inline-error">{usernameError}</p>}
             </SettingRow>
 
             <SettingRow
@@ -349,7 +372,7 @@ function SettingsForm({
           <button type="button" className="btn btn-ghost" disabled={saving} onClick={discard}>
             Discard
           </button>
-          <button type="button" className="btn btn-primary" disabled={saving || !!nameError} onClick={save}>
+          <button type="button" className="btn btn-primary" disabled={saving || !!formError} onClick={save}>
             Save changes
           </button>
         </div>

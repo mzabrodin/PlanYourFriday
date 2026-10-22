@@ -7,6 +7,7 @@
     <Project Path="src/PlanYourFriday.Worker/PlanYourFriday.Worker.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/PlanYourFriday.IntegrationTests/PlanYourFriday.IntegrationTests.csproj" />
     <Project Path="tests/PlanYourFriday.UnitTests/PlanYourFriday.UnitTests.csproj" />
   </Folder>
 </Solution>

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
-    <UserSecretsId>dotnet-PlanYourFriday.Worker-b5c897fb-406c-419c-8e62-5f8fb83e2883</UserSecretsId>
+    <UserSecretsId>ea34f15e-9950-482b-9f04-c32abc5c8ca4</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

@@ -235,6 +235,7 @@ generated_code = true
 # Test names use the Method_ExpectedBehavior convention
 [tests/**.cs]
 dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1861.severity = none
 
 #### Naming styles ####
 [*.{cs,vb}]

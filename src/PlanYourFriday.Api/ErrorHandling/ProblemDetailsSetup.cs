@@ -27,7 +27,6 @@ internal static class ProblemDetailsSetup
             problem.Extensions.TryAdd("code", phrase.Replace(' ', '_').ToLowerInvariant());
         }
 
-        problem.Extensions.Remove("traceId");
-        problem.Extensions["trace_id"] = Activity.Current?.TraceId.ToString() ?? context.HttpContext.TraceIdentifier;
+        problem.Extensions["traceId"] = Activity.Current?.TraceId.ToString() ?? context.HttpContext.TraceIdentifier;
     }
 }

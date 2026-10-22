@@ -6,7 +6,9 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PlanYourFriday.Domain.Events;
+using PlanYourFriday.Domain.Friends;
 using PlanYourFriday.Domain.Groups;
+using PlanYourFriday.Domain.Notifications;
 using PlanYourFriday.Domain.Users;
 using PlanYourFriday.Infrastructure.Persistence;
 
@@ -24,16 +26,42 @@ namespace PlanYourFriday.Infrastructure.Persistence.Migrations
                 .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "auth_provider", new[] { "google" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "auth_provider", new[] { "development", "google" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "calendar_provider", new[] { "google" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "connection_status", new[] { "active", "expired", "revoked" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "event_status", new[] { "cancelled", "confirmed" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "group_status", new[] { "cancelled", "planning", "scheduled" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "friendship_status", new[] { "accepted", "pending" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "group_status", new[] { "cancelled", "planning", "scheduled", "voting" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "invitation_status", new[] { "accepted", "pending", "revoked", "sent" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "member_role", new[] { "organizer", "participant" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "notification_kind", new[] { "deadline_soon", "event_cancelled", "event_confirmed", "event_updated", "friend_accepted", "friend_request", "invited", "member_joined", "poll_closed", "poll_started", "voting_started" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "sync_status", new[] { "failed", "pending", "synced" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "vote_answer", new[] { "maybe", "no", "yes" });
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "citext");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FriendlyName")
+                        .HasColumnType("text")
+                        .HasColumnName("friendly_name");
+
+                    b.Property<string>("Xml")
+                        .HasColumnType("text")
+                        .HasColumnName("xml");
+
+                    b.HasKey("Id")
+                        .HasName("pk_data_protection_keys");
+
+                    b.ToTable("data_protection_keys", (string)null);
+                });
 
             modelBuilder.Entity("PlanYourFriday.Application.Outbox.OutboxMessage", b =>
                 {
@@ -185,7 +213,8 @@ namespace PlanYourFriday.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("GroupId")
                         .IsUnique()
-                        .HasDatabaseName("ix_events_group_id");
+                        .HasDatabaseName("ix_events_group_id")
+                        .HasFilter("status = 'confirmed'");
 
                     b.HasIndex("OwnerId")
                         .HasDatabaseName("ix_events_owner_id");
@@ -193,6 +222,56 @@ namespace PlanYourFriday.Infrastructure.Persistence.Migrations
                     b.ToTable("events", null, t =>
                         {
                             t.HasCheckConstraint("ck_events_time", "ends_at > starts_at");
+                        });
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Friends.Friendship", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime?>("AcceptedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("accepted_at");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("RequesterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requester_id");
+
+                    b.Property<FriendshipStatus>("Status")
+                        .HasColumnType("friendship_status")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserHighId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_high_id");
+
+                    b.Property<Guid>("UserLowId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_low_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_friendships");
+
+                    b.HasIndex("UserHighId")
+                        .HasDatabaseName("ix_friendships_user_high_id");
+
+                    b.HasIndex("UserLowId", "UserHighId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_friendships_user_low_id_user_high_id");
+
+                    b.ToTable("friendships", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_friendships_order", "user_low_id < user_high_id");
                         });
                 });
 
@@ -282,6 +361,10 @@ namespace PlanYourFriday.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
+                    b.Property<DateTime?>("VotingDeadline")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("voting_deadline");
+
                     b.ComplexProperty(typeof(Dictionary<string, object>), "Window", "PlanYourFriday.Domain.Groups.Group.Window#TimeRange", b1 =>
                         {
                             b1.IsRequired();
@@ -324,6 +407,10 @@ namespace PlanYourFriday.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<Guid?>("RemindedEventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reminded_event_id");
 
                     b.Property<MemberRole>("Role")
                         .HasColumnType("member_role")
@@ -386,6 +473,300 @@ namespace PlanYourFriday.Infrastructure.Persistence.Migrations
                     b.ToTable("invitations", (string)null);
                 });
 
+            modelBuilder.Entity("PlanYourFriday.Domain.Groups.OptionVote", b =>
+                {
+                    b.Property<Guid>("OptionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("option_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<VoteAnswer>("Answer")
+                        .HasColumnType("vote_answer")
+                        .HasColumnName("answer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("OptionId", "UserId")
+                        .HasName("pk_time_option_votes");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_time_option_votes_user_id");
+
+                    b.ToTable("time_option_votes", (string)null);
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Groups.TimeOption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.PrimitiveCollection<Guid[]>("FreeUserIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]")
+                        .HasColumnName("free_user_ids");
+
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("group_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "Time", "PlanYourFriday.Domain.Groups.TimeOption.Time#TimeRange", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<DateTime>("End")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("ends_at");
+
+                            b1.Property<DateTime>("Start")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("starts_at");
+                        });
+
+                    b.HasKey("Id")
+                        .HasName("pk_time_options");
+
+                    b.HasIndex("GroupId")
+                        .HasDatabaseName("ix_time_options_group_id");
+
+                    b.ToTable("time_options", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_time_options_time", "ends_at > starts_at");
+                        });
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Notifications.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("GroupId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("group_id");
+
+                    b.Property<NotificationKind>("Kind")
+                        .HasColumnType("notification_kind")
+                        .HasColumnName("kind");
+
+                    b.Property<Guid?>("PollId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("poll_id");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("read_at");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_notifications");
+
+                    b.HasIndex("ActorId")
+                        .HasDatabaseName("ix_notifications_actor_id");
+
+                    b.HasIndex("GroupId")
+                        .HasDatabaseName("ix_notifications_group_id");
+
+                    b.HasIndex("PollId")
+                        .HasDatabaseName("ix_notifications_poll_id");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .HasDatabaseName("ix_notifications_user_id_created_at");
+
+                    b.ToTable("notifications", (string)null);
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Polls.Poll", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("AllowNewOptions")
+                        .HasColumnType("boolean")
+                        .HasColumnName("allow_new_options");
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("closed_at");
+
+                    b.Property<bool>("ClosedNotified")
+                        .HasColumnType("boolean")
+                        .HasColumnName("closed_notified");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("creator_id");
+
+                    b.Property<DateTime?>("Deadline")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deadline");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<Guid?>("GroupId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("group_id");
+
+                    b.Property<bool>("MultipleChoice")
+                        .HasColumnType("boolean")
+                        .HasColumnName("multiple_choice");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_polls");
+
+                    b.HasIndex("CreatorId")
+                        .HasDatabaseName("ix_polls_creator_id");
+
+                    b.HasIndex("GroupId")
+                        .HasDatabaseName("ix_polls_group_id");
+
+                    b.ToTable("polls", (string)null);
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Polls.PollOption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AddedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("added_by_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("PollId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("poll_id");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer")
+                        .HasColumnName("position");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_poll_options");
+
+                    b.HasIndex("PollId")
+                        .HasDatabaseName("ix_poll_options_poll_id");
+
+                    b.ToTable("poll_options", (string)null);
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Polls.PollParticipant", b =>
+                {
+                    b.Property<Guid>("PollId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("poll_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("PollId", "UserId")
+                        .HasName("pk_poll_participants");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_poll_participants_user_id");
+
+                    b.ToTable("poll_participants", (string)null);
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Polls.PollVote", b =>
+                {
+                    b.Property<Guid>("OptionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("option_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("OptionId", "UserId")
+                        .HasName("pk_poll_votes");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_poll_votes_user_id");
+
+                    b.ToTable("poll_votes", (string)null);
+                });
+
             modelBuilder.Entity("PlanYourFriday.Domain.Users.CalendarConnection", b =>
                 {
                     b.Property<Guid>("Id")
@@ -396,6 +777,16 @@ namespace PlanYourFriday.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("access_token");
+
+                    b.Property<string>("AccountEmail")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("account_email");
+
+                    b.PrimitiveCollection<string[]>("BusyCalendarIds")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("busy_calendar_ids");
 
                     b.Property<string>("CalendarId")
                         .IsRequired()
@@ -414,6 +805,10 @@ namespace PlanYourFriday.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsPrimary")
                         .HasColumnType("boolean")
                         .HasColumnName("is_primary");
+
+                    b.Property<DateTime?>("LastSyncedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_synced_at");
 
                     b.Property<CalendarProvider>("Provider")
                         .HasColumnType("calendar_provider")
@@ -467,13 +862,31 @@ namespace PlanYourFriday.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("DisplayName")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("citext")
                         .HasColumnName("display_name");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("citext")
                         .HasColumnName("email");
+
+                    b.Property<string>("FriendCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("friend_code");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("photo_url");
+
+                    b.Property<int>("SessionVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("session_version");
+
+                    b.Property<string>("Settings")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("settings");
 
                     b.Property<string>("TimeZone")
                         .IsRequired()
@@ -484,12 +897,26 @@ namespace PlanYourFriday.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("citext")
+                        .HasColumnName("username");
+
                     b.HasKey("Id")
                         .HasName("pk_users");
 
                     b.HasIndex("Email")
                         .IsUnique()
                         .HasDatabaseName("ix_users_email");
+
+                    b.HasIndex("FriendCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_users_friend_code");
+
+                    b.HasIndex("Username")
+                        .IsUnique()
+                        .HasDatabaseName("ix_users_username");
 
                     b.ToTable("users", (string)null);
                 });
@@ -554,8 +981,8 @@ namespace PlanYourFriday.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("PlanYourFriday.Domain.Events.Event", b =>
                 {
                     b.HasOne("PlanYourFriday.Domain.Groups.Group", null)
-                        .WithOne()
-                        .HasForeignKey("PlanYourFriday.Domain.Events.Event", "GroupId")
+                        .WithMany()
+                        .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_events_groups_group_id");
@@ -566,6 +993,23 @@ namespace PlanYourFriday.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_events_users_owner_id");
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Friends.Friendship", b =>
+                {
+                    b.HasOne("PlanYourFriday.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserHighId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_friendships_users_user_high_id");
+
+                    b.HasOne("PlanYourFriday.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserLowId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_friendships_users_user_low_id");
                 });
 
             modelBuilder.Entity("PlanYourFriday.Domain.Groups.AvailabilitySlot", b =>
@@ -621,6 +1065,121 @@ namespace PlanYourFriday.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_invitations_groups_group_id");
                 });
 
+            modelBuilder.Entity("PlanYourFriday.Domain.Groups.OptionVote", b =>
+                {
+                    b.HasOne("PlanYourFriday.Domain.Groups.TimeOption", null)
+                        .WithMany("Votes")
+                        .HasForeignKey("OptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_time_option_votes_time_options_option_id");
+
+                    b.HasOne("PlanYourFriday.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_time_option_votes_users_user_id");
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Groups.TimeOption", b =>
+                {
+                    b.HasOne("PlanYourFriday.Domain.Groups.Group", null)
+                        .WithMany("Options")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_time_options_groups_group_id");
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Notifications.Notification", b =>
+                {
+                    b.HasOne("PlanYourFriday.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_notifications_users_actor_id");
+
+                    b.HasOne("PlanYourFriday.Domain.Groups.Group", null)
+                        .WithMany()
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_notifications_groups_group_id");
+
+                    b.HasOne("PlanYourFriday.Domain.Polls.Poll", null)
+                        .WithMany()
+                        .HasForeignKey("PollId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_notifications_polls_poll_id");
+
+                    b.HasOne("PlanYourFriday.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_notifications_users_user_id");
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Polls.Poll", b =>
+                {
+                    b.HasOne("PlanYourFriday.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_polls_users_creator_id");
+
+                    b.HasOne("PlanYourFriday.Domain.Groups.Group", null)
+                        .WithMany()
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_polls_groups_group_id");
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Polls.PollOption", b =>
+                {
+                    b.HasOne("PlanYourFriday.Domain.Polls.Poll", null)
+                        .WithMany("Options")
+                        .HasForeignKey("PollId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_poll_options_polls_poll_id");
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Polls.PollParticipant", b =>
+                {
+                    b.HasOne("PlanYourFriday.Domain.Polls.Poll", null)
+                        .WithMany("Participants")
+                        .HasForeignKey("PollId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_poll_participants_polls_poll_id");
+
+                    b.HasOne("PlanYourFriday.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_poll_participants_users_user_id");
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Polls.PollVote", b =>
+                {
+                    b.HasOne("PlanYourFriday.Domain.Polls.PollOption", null)
+                        .WithMany("Votes")
+                        .HasForeignKey("OptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_poll_votes_poll_options_option_id");
+
+                    b.HasOne("PlanYourFriday.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_poll_votes_users_user_id");
+                });
+
             modelBuilder.Entity("PlanYourFriday.Domain.Users.CalendarConnection", b =>
                 {
                     b.HasOne("PlanYourFriday.Domain.Users.User", null)
@@ -651,11 +1210,30 @@ namespace PlanYourFriday.Infrastructure.Persistence.Migrations
                     b.Navigation("Invitations");
 
                     b.Navigation("Members");
+
+                    b.Navigation("Options");
                 });
 
             modelBuilder.Entity("PlanYourFriday.Domain.Groups.GroupMember", b =>
                 {
                     b.Navigation("Availability");
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Groups.TimeOption", b =>
+                {
+                    b.Navigation("Votes");
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Polls.Poll", b =>
+                {
+                    b.Navigation("Options");
+
+                    b.Navigation("Participants");
+                });
+
+            modelBuilder.Entity("PlanYourFriday.Domain.Polls.PollOption", b =>
+                {
+                    b.Navigation("Votes");
                 });
 
             modelBuilder.Entity("PlanYourFriday.Domain.Users.User", b =>

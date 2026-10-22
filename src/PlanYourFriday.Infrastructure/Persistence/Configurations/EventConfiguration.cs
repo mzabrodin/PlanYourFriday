@@ -20,9 +20,11 @@ internal sealed class EventConfiguration : IEntityTypeConfiguration<Event>
         });
 
         builder.HasOne<Group>()
-            .WithOne()
-            .HasForeignKey<Event>(e => e.GroupId)
+            .WithMany()
+            .HasForeignKey(e => e.GroupId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(e => e.GroupId).IsUnique().HasFilter("status = 'confirmed'");
 
         builder.HasOne<User>()
             .WithMany()

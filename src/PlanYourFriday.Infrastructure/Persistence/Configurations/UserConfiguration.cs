@@ -1,4 +1,7 @@
+using System.Text.Json;
+
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using PlanYourFriday.Domain.Users;
@@ -13,6 +16,18 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(u => u.Email).HasColumnType("citext");
         builder.HasIndex(u => u.Email).IsUnique();
+
+        builder.Property(u => u.Username).HasColumnType("citext").HasMaxLength(Usernames.MaxLength);
+        builder.HasIndex(u => u.Username).IsUnique();
+
+        builder.HasIndex(u => u.FriendCode).IsUnique();
+
+        builder.Property(u => u.Settings)
+            .HasColumnType("jsonb")
+            .HasConversion(
+                settings => JsonSerializer.Serialize(settings, JsonSerializerOptions.Web),
+                json => JsonSerializer.Deserialize<UserSettings>(json, JsonSerializerOptions.Web) ?? UserSettings.Default,
+                new ValueComparer<UserSettings>((a, b) => Equals(a, b), s => s.GetHashCode(), s => s));
 
         builder.HasMany(u => u.Identities)
             .WithOne()

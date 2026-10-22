@@ -1,15 +1,22 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
+using Npgsql;
+
+using PlanYourFriday.Application.Common;
 using PlanYourFriday.Application.Outbox;
 using PlanYourFriday.Domain.Common;
 using PlanYourFriday.Domain.Events;
+using PlanYourFriday.Domain.Friends;
 using PlanYourFriday.Domain.Groups;
+using PlanYourFriday.Domain.Notifications;
+using PlanYourFriday.Domain.Polls;
 using PlanYourFriday.Domain.Users;
 
 namespace PlanYourFriday.Infrastructure.Persistence;
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options, TimeProvider timeProvider)
-    : DbContext(options)
+    : DbContext(options), IUnitOfWork, IDataProtectionKeyContext
 {
     public DbSet<User> Users => Set<User>();
 
@@ -23,11 +30,25 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, TimePro
 
     public DbSet<Invitation> Invitations => Set<Invitation>();
 
+    public DbSet<TimeOption> TimeOptions => Set<TimeOption>();
+
     public DbSet<Event> Events => Set<Event>();
 
     public DbSet<CalendarEventLink> CalendarEventLinks => Set<CalendarEventLink>();
 
+    public DbSet<Notification> Notifications => Set<Notification>();
+
+    public DbSet<Friendship> Friendships => Set<Friendship>();
+
+    public DbSet<Poll> Polls => Set<Poll>();
+
+    public DbSet<PollParticipant> PollParticipants => Set<PollParticipant>();
+
+    public DbSet<PollOption> PollOptions => Set<PollOption>();
+
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
@@ -35,12 +56,21 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, TimePro
         return base.SaveChanges(acceptAllChangesOnSuccess);
     }
 
-    public override Task<int> SaveChangesAsync(
+    public override async Task<int> SaveChangesAsync(
         bool acceptAllChangesOnSuccess,
         CancellationToken cancellationToken = default)
     {
         StampAuditFields();
-        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        try
+        {
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+        catch (DbUpdateException exception)
+            when (exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            throw new AlreadyExistsException(
+                "resource.already_exists", "This was changed by someone else at the same time. Try again.");
+        }
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

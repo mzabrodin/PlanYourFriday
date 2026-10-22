@@ -12,6 +12,7 @@ public sealed class CalendarConnection : Entity
         Guid userId,
         CalendarProvider provider,
         string externalAccountId,
+        string accountEmail,
         string calendarId,
         string accessToken,
         string refreshToken,
@@ -23,7 +24,7 @@ public sealed class CalendarConnection : Entity
         Provider = provider;
         ExternalAccountId = externalAccountId;
         IsPrimary = isPrimary;
-        Reconnect(calendarId, accessToken, refreshToken, tokenExpiresAt, scopes);
+        Reconnect(accountEmail, calendarId, accessToken, refreshToken, tokenExpiresAt, scopes);
     }
 
     public Guid UserId { get; private set; }
@@ -32,7 +33,13 @@ public sealed class CalendarConnection : Entity
 
     public string ExternalAccountId { get; private set; } = null!;
 
+    public string AccountEmail { get; private set; } = null!;
+
     public string CalendarId { get; private set; } = null!;
+
+    public string[] BusyCalendarIds { get; private set; } = [];
+
+    public DateTime? LastSyncedAt { get; private set; }
 
     public string AccessToken { get; private set; } = null!;
 
@@ -79,13 +86,20 @@ public sealed class CalendarConnection : Entity
     }
 
     internal void Reconnect(
+        string accountEmail,
         string calendarId,
         string accessToken,
         string refreshToken,
         DateTime tokenExpiresAt,
         IEnumerable<string> scopes)
     {
-        CalendarId = calendarId;
+        AccountEmail = accountEmail;
+        if (Status == ConnectionStatus.Revoked || BusyCalendarIds.Length == 0)
+        {
+            CalendarId = calendarId;
+            BusyCalendarIds = [calendarId];
+        }
+
         AccessToken = accessToken;
         RefreshToken = refreshToken;
         TokenExpiresAt = tokenExpiresAt;
@@ -96,5 +110,21 @@ public sealed class CalendarConnection : Entity
     internal void MarkPrimary()
     {
         IsPrimary = true;
+    }
+
+    internal void ChooseCalendars(IEnumerable<string> busyCalendarIds, string writeCalendarId)
+    {
+        if (Status == ConnectionStatus.Revoked)
+        {
+            throw new InvalidStateException("calendar_connection.revoked", "Cannot change a revoked calendar connection.");
+        }
+
+        CalendarId = writeCalendarId;
+        BusyCalendarIds = [.. busyCalendarIds.Distinct(StringComparer.Ordinal)];
+    }
+
+    internal void MarkSynced(DateTime now)
+    {
+        LastSyncedAt = now;
     }
 }

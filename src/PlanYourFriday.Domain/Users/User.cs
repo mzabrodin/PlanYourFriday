@@ -1,9 +1,14 @@
+using System.Security.Cryptography;
+
 using PlanYourFriday.Domain.Common;
 
 namespace PlanYourFriday.Domain.Users;
 
 public sealed class User : Entity
 {
+    private const string FriendCodeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    private const int FriendCodeLength = 8;
+
     private readonly List<UserIdentity> _identities = [];
     private readonly List<CalendarConnection> _calendarConnections = [];
 
@@ -16,6 +21,8 @@ public sealed class User : Entity
         Email = email;
         DisplayName = displayName;
         TimeZone = timeZone;
+        Username = Usernames.FromEmail(email);
+        FriendCode = GenerateFriendCode();
         _identities.Add(new UserIdentity(Id, provider, subject));
     }
 
@@ -24,6 +31,16 @@ public sealed class User : Entity
     public string DisplayName { get; private set; } = null!;
 
     public string TimeZone { get; private set; } = null!;
+
+    public string Username { get; private set; } = null!;
+
+    public string FriendCode { get; private set; } = null!;
+
+    public string? PhotoUrl { get; private set; }
+
+    public int SessionVersion { get; private set; }
+
+    public UserSettings Settings { get; private set; } = UserSettings.Default;
 
     public IReadOnlyCollection<UserIdentity> Identities => _identities;
 
@@ -38,6 +55,32 @@ public sealed class User : Entity
     {
         DisplayName = displayName;
         TimeZone = timeZone;
+    }
+
+    public void ChangeUsername(string username)
+    {
+        Username = username;
+    }
+
+    public void SetPhotoUrl(string? photoUrl)
+    {
+        PhotoUrl = photoUrl;
+    }
+
+    public void RegenerateFriendCode()
+    {
+        FriendCode = GenerateFriendCode();
+    }
+
+    public void UpdateSettings(UserSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        Settings = settings;
+    }
+
+    public void EndAllSessions()
+    {
+        SessionVersion++;
     }
 
     public UserIdentity AddIdentity(AuthProvider provider, string subject)
@@ -56,6 +99,7 @@ public sealed class User : Entity
     public CalendarConnection ConnectCalendar(
         CalendarProvider provider,
         string externalAccountId,
+        string accountEmail,
         string calendarId,
         string accessToken,
         string refreshToken,
@@ -72,6 +116,7 @@ public sealed class User : Entity
                 Id,
                 provider,
                 externalAccountId,
+                accountEmail,
                 calendarId,
                 accessToken,
                 refreshToken,
@@ -82,7 +127,7 @@ public sealed class User : Entity
             return connection;
         }
 
-        connection.Reconnect(calendarId, accessToken, refreshToken, tokenExpiresAt, scopes);
+        connection.Reconnect(accountEmail, calendarId, accessToken, refreshToken, tokenExpiresAt, scopes);
         if (!hasOtherPrimary)
         {
             connection.MarkPrimary();
@@ -114,6 +159,26 @@ public sealed class User : Entity
     public void MarkCalendarExpired(Guid connectionId)
     {
         FindConnection(connectionId).MarkExpired();
+    }
+
+    public void ChooseCalendars(Guid connectionId, IEnumerable<string> busyCalendarIds, string writeCalendarId)
+    {
+        FindConnection(connectionId).ChooseCalendars(busyCalendarIds, writeCalendarId);
+    }
+
+    public void MarkCalendarSynced(Guid connectionId, DateTime now)
+    {
+        FindConnection(connectionId).MarkSynced(now);
+    }
+
+    public CalendarConnection? FindPrimaryCalendar()
+    {
+        return _calendarConnections.FirstOrDefault(c => c.IsPrimary && c.Status != ConnectionStatus.Revoked);
+    }
+
+    private static string GenerateFriendCode()
+    {
+        return new string(RandomNumberGenerator.GetItems<char>(FriendCodeAlphabet, FriendCodeLength));
     }
 
     private CalendarConnection FindConnection(Guid connectionId)

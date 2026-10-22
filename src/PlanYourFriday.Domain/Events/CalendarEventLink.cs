@@ -29,6 +29,12 @@ public sealed class CalendarEventLink : Entity
         SyncStatus = SyncStatus.Synced;
     }
 
+    internal void MarkRemoved()
+    {
+        ExternalEventId = null;
+        SyncStatus = SyncStatus.Synced;
+    }
+
     internal void MarkFailed()
     {
         SyncStatus = SyncStatus.Failed;

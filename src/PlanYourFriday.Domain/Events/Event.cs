@@ -60,9 +60,31 @@ public sealed class Event : Entity
         return link;
     }
 
+    public void Update(string title, string? description, string? location, string? meetingLink)
+    {
+        if (Status == EventStatus.Cancelled)
+        {
+            throw new InvalidStateException("event.cancelled", "A cancelled event cannot be changed.");
+        }
+
+        Title = title;
+        Description = description;
+        Location = location;
+        MeetingLink = meetingLink;
+        foreach (var link in _calendarLinks)
+        {
+            link.MarkPending();
+        }
+    }
+
     public void MarkSynced(Guid connectionId, string externalEventId)
     {
         FindLink(connectionId).MarkSynced(externalEventId);
+    }
+
+    public void MarkRemovedFromCalendar(Guid connectionId)
+    {
+        FindLink(connectionId).MarkRemoved();
     }
 
     public void MarkSyncFailed(Guid connectionId)

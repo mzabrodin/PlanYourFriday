@@ -42,7 +42,13 @@ const TONE_COLOR: Record<ItemTone, string> = { ...STAGE_COLOR, mine: 'var(--mine
 
 function toEventInput(item: CalendarItemDto, now: number): EventInput {
   const tone = toneOf(item, now)
-  const common = { id: item.id, start: item.time.start, end: item.time.end, extendedProps: { item }, className: `pc-tone pc-${tone}` }
+  const common = {
+    id: item.id,
+    start: item.time.start,
+    end: item.time.end,
+    extendedProps: { item },
+    className: `pc-tone pc-${tone}`,
+  }
   switch (item.kind) {
     case 'EVENT':
       return { ...common, title: item.title }
@@ -143,7 +149,12 @@ export function CalendarPage() {
                 <p className="eyebrow" style={{ color: TONE_COLOR[toneOf(selected, now)] }}>
                   {TONE_LABEL[toneOf(selected, now)]}
                 </p>
-                <button type="button" className="link-button muted" onClick={() => setSelected(null)} aria-label="Close">
+                <button
+                  type="button"
+                  className="link-button muted"
+                  onClick={() => setSelected(null)}
+                  aria-label="Close"
+                >
                   <X size={18} />
                 </button>
               </header>

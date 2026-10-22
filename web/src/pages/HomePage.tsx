@@ -1,5 +1,16 @@
 import { useState } from 'react'
-import { ArrowRight, Hourglass, Moon, PartyPopper, Plus, Sofa, Sun, Sunrise, Sunset, type LucideIcon } from 'lucide-react'
+import {
+  ArrowRight,
+  Hourglass,
+  Moon,
+  PartyPopper,
+  Plus,
+  Sofa,
+  Sun,
+  Sunrise,
+  Sunset,
+  type LucideIcon,
+} from 'lucide-react'
 import { Link } from 'react-router'
 import type { GroupSummaryDto } from '../api'
 import { useGroups, useMe } from '../api/queries'

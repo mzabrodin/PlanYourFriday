@@ -36,7 +36,14 @@ function saveIdeas(ideas: string[]) {
 
 function ideasFromParams(params: URLSearchParams): string[] | null {
   const raw = [...params.getAll('option'), ...(params.get('options')?.split(',') ?? [])]
-  const ideas = [...new Map(raw.map((s) => s.trim().slice(0, 40)).filter(Boolean).map((s) => [s.toLowerCase(), s])).values()]
+  const ideas = [
+    ...new Map(
+      raw
+        .map((s) => s.trim().slice(0, 40))
+        .filter(Boolean)
+        .map((s) => [s.toLowerCase(), s]),
+    ).values(),
+  ]
   return ideas.length >= MIN_IDEAS ? ideas.slice(0, MAX_IDEAS) : null
 }
 
@@ -92,7 +99,9 @@ export function WheelPage() {
       <header className="wheel-intro">
         <h1>{fromTie ? "It's a tie!" : 'No idea what to do?'}</h1>
         <p className="lead">
-          {fromTie ? 'Your friends voted equally. Let the wheel break the tie.' : 'Spin the Friday wheel and let fate pick the plan.'}
+          {fromTie
+            ? 'Your friends voted equally. Let the wheel break the tie.'
+            : 'Spin the Friday wheel and let fate pick the plan.'}
         </p>
       </header>
 
@@ -121,7 +130,9 @@ export function WheelPage() {
                     strokeWidth="1.5"
                   />
                   <text
-                    transform={mid > 180 ? `rotate(${mid + 90}) translate(-92 0)` : `rotate(${mid - 90}) translate(92 0)`}
+                    transform={
+                      mid > 180 ? `rotate(${mid + 90}) translate(-92 0)` : `rotate(${mid - 90}) translate(92 0)`
+                    }
                     textAnchor={mid > 180 ? 'start' : 'end'}
                     dominantBaseline="middle"
                     className="wheel-label"
@@ -209,7 +220,9 @@ export function WheelPage() {
                 <Plus size={16} aria-hidden="true" /> Add
               </button>
             </form>
-            <p className="hint">{fromTie ? 'Tied options from your poll. Reset to get your own list back.' : 'Saved in this browser.'}</p>
+            <p className="hint">
+              {fromTie ? 'Tied options from your poll. Reset to get your own list back.' : 'Saved in this browser.'}
+            </p>
           </section>
         </aside>
       </div>

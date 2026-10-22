@@ -111,8 +111,7 @@ export function useDeleteAccount() {
 
 export const useGroups = () => useQuery({ queryKey: keys.groups, queryFn: api.listGroups })
 
-export const useGroup = (id: string) =>
-  useQuery({ queryKey: keys.group(id), queryFn: () => api.getGroup(id) })
+export const useGroup = (id: string) => useQuery({ queryKey: keys.group(id), queryFn: () => api.getGroup(id) })
 
 export const useAvailability = (id: string) =>
   useQuery({ queryKey: keys.availability(id), queryFn: () => api.getAvailability(id) })
@@ -202,10 +201,7 @@ export function useJoinGroup() {
   return useMutation({
     mutationFn: (token: string) => api.joinGroup(token),
     onSuccess: () =>
-      Promise.all([
-        qc.invalidateQueries({ queryKey: keys.groups }),
-        qc.invalidateQueries({ queryKey: ['calendar'] }),
-      ]),
+      Promise.all([qc.invalidateQueries({ queryKey: keys.groups }), qc.invalidateQueries({ queryKey: ['calendar'] })]),
   })
 }
 

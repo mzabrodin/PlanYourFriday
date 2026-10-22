@@ -65,7 +65,9 @@ function Poll({ poll, meId }: { poll: PollDto; meId: string | undefined }) {
 
       <header className="poll-header">
         <div>
-          <p className="eyebrow">{closed ? 'Decided' : 'Poll'} · by {poll.creatorId === meId ? 'you' : poll.creatorName}</p>
+          <p className="eyebrow">
+            {closed ? 'Decided' : 'Poll'} · by {poll.creatorId === meId ? 'you' : poll.creatorName}
+          </p>
           <h1>{poll.title}</h1>
           {poll.description && <p className="muted">{poll.description}</p>}
         </div>
@@ -91,7 +93,8 @@ function Poll({ poll, meId }: { poll: PollDto; meId: string | undefined }) {
       <section className="card">
         {!closed && (
           <p className="muted small poll-instructions">
-            {poll.multipleChoice ? 'Tap every option you like.' : 'Pick one option.'} You can change your vote until it closes.
+            {poll.multipleChoice ? 'Tap every option you like.' : 'Pick one option.'} You can change your vote until it
+            closes.
           </p>
         )}
         <ul className="poll-options" role={poll.multipleChoice ? 'group' : 'radiogroup'} aria-label="Options">
@@ -122,7 +125,9 @@ function Poll({ poll, meId }: { poll: PollDto; meId: string | undefined }) {
                       <span style={{ width: `${(o.voterIds.length / maxVotes) * 100}%` }} />
                     </span>
                     {o.voterIds.length > 0 && (
-                      <span className="poll-voters">{o.voterIds.map((id) => names.get(id) ?? 'Someone').join(', ')}</span>
+                      <span className="poll-voters">
+                        {o.voterIds.map((id) => names.get(id) ?? 'Someone').join(', ')}
+                      </span>
                     )}
                   </span>
                 </button>
@@ -132,7 +137,9 @@ function Poll({ poll, meId }: { poll: PollDto; meId: string | undefined }) {
         </ul>
         <InlineError error={vote.error} />
 
-        {!closed && (poll.allowNewOptions || isCreator) && poll.options.length < MAX_OPTIONS && <AddOption pollId={poll.id} />}
+        {!closed && (poll.allowNewOptions || isCreator) && poll.options.length < MAX_OPTIONS && (
+          <AddOption pollId={poll.id} />
+        )}
       </section>
 
       <section className="card">
@@ -202,7 +209,8 @@ function Result({ poll, winners }: { poll: PollDto; winners: string[] }) {
     )
   }
 
-  const groupLink = (title: string) => `/groups/new?title=${encodeURIComponent(title)}&poll=${encodeURIComponent(poll.id)}`
+  const groupLink = (title: string) =>
+    `/groups/new?title=${encodeURIComponent(title)}&poll=${encodeURIComponent(poll.id)}`
   const tie = winners.length > 1
 
   return (
@@ -253,7 +261,13 @@ function AddOption({ pollId }: { pollId: string }) {
   return (
     <form className="subsection" onSubmit={submit}>
       <div className="copy-row">
-        <input value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={80} placeholder="Suggest another idea" aria-label="New option" />
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          maxLength={80}
+          placeholder="Suggest another idea"
+          aria-label="New option"
+        />
         <button type="submit" className="btn" disabled={add.isPending || !draft.trim()}>
           <Plus size={16} aria-hidden="true" /> Add
         </button>

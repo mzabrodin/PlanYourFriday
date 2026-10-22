@@ -5,7 +5,15 @@ import { useConfirmEvent } from '../../api/queries'
 import { formatRange } from '../../lib/time'
 import { InlineError } from '../States'
 
-export function ConfirmEventForm({ group, time, onCancel }: { group: GroupDto; time: TimeRange; onCancel: () => void }) {
+export function ConfirmEventForm({
+  group,
+  time,
+  onCancel,
+}: {
+  group: GroupDto
+  time: TimeRange
+  onCancel: () => void
+}) {
   const confirm = useConfirmEvent(group.id)
   const [title, setTitle] = useState(group.title)
   const [location, setLocation] = useState('')

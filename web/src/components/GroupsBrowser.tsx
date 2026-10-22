@@ -22,7 +22,11 @@ function useGroupFilters() {
     return value && allowed.includes(value) ? value : fallback
   }
   const filters: GroupFilters = {
-    view: pick<GroupView>('view', GROUP_VIEWS.map((v) => v.value), DEFAULTS.view),
+    view: pick<GroupView>(
+      'view',
+      GROUP_VIEWS.map((v) => v.value),
+      DEFAULTS.view,
+    ),
     role: pick<RoleFilter>('role', ['any', 'organizer', 'participant'], DEFAULTS.role),
     sort: pick<GroupSort>('sort', ['soonest', 'latest', 'title'], DEFAULTS.sort),
     query: params.get('q') ?? '',
@@ -49,13 +53,7 @@ function useGroupFilters() {
   return { filters, update, reset: () => setParams({}, { replace: true }), isDefault }
 }
 
-export function GroupsBrowser({
-  groups,
-  now,
-}: {
-  groups: GroupSummaryDto[]
-  now: number
-}) {
+export function GroupsBrowser({ groups, now }: { groups: GroupSummaryDto[]; now: number }) {
   const { filters, update, reset, isDefault } = useGroupFilters()
   const [search, setSearch] = useState(filters.query)
 
@@ -64,73 +62,73 @@ export function GroupsBrowser({
 
   return (
     <>
-    <div className="toolbar">
-      <input
-        type="search"
-        className="search"
-        placeholder="Search by name, organizer or place…"
-        aria-label="Search groups"
-        value={search}
-        onChange={(e) => {
-          setSearch(e.target.value)
-          update({ query: e.target.value })
-        }}
-      />
-      <select aria-label="Role" value={filters.role} onChange={(e) => update({ role: e.target.value as RoleFilter })}>
-        <option value="any">Any role</option>
-        <option value="organizer">I organize</option>
-        <option value="participant">I'm invited</option>
-      </select>
-      <select aria-label="Sort" value={filters.sort} onChange={(e) => update({ sort: e.target.value as GroupSort })}>
-        <option value="soonest">Soonest first</option>
-        <option value="latest">Latest first</option>
-        <option value="title">A–Z</option>
-      </select>
-    </div>
-
-    <div className="view-tabs" role="tablist" aria-label="Show groups">
-      {GROUP_VIEWS.map(({ value, label }) => {
-        const count = base.filter((g) => matchesView(g, value, now)).length
-        return (
-          <button
-            key={value}
-            type="button"
-            role="tab"
-            aria-selected={filters.view === value}
-            className={`view-tab${value === 'needs-input' && count > 0 ? ' view-tab-alert' : ''}`}
-            onClick={() => update({ view: value })}
-          >
-            {label} <span className="count">{count}</span>
-          </button>
-        )
-      })}
-    </div>
-
-    {visible.length === 0 ? (
-      <div className="empty">
-        <p>No groups match these filters.</p>
-        {!isDefault && (
-          <button
-            type="button"
-            className="btn"
-            onClick={() => {
-              setSearch('')
-              reset()
-            }}
-          >
-            Clear filters
-          </button>
-        )}
+      <div className="toolbar">
+        <input
+          type="search"
+          className="search"
+          placeholder="Search by name, organizer or place…"
+          aria-label="Search groups"
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            update({ query: e.target.value })
+          }}
+        />
+        <select aria-label="Role" value={filters.role} onChange={(e) => update({ role: e.target.value as RoleFilter })}>
+          <option value="any">Any role</option>
+          <option value="organizer">I organize</option>
+          <option value="participant">I'm invited</option>
+        </select>
+        <select aria-label="Sort" value={filters.sort} onChange={(e) => update({ sort: e.target.value as GroupSort })}>
+          <option value="soonest">Soonest first</option>
+          <option value="latest">Latest first</option>
+          <option value="title">A–Z</option>
+        </select>
       </div>
-    ) : (
-      <ul className="plan-grid">
-        {visible.map((g) => (
-          <li key={g.id}>
-            <GroupCard group={g} now={now} />
-          </li>
-        ))}
-      </ul>
-    )}
+
+      <div className="view-tabs" role="tablist" aria-label="Show groups">
+        {GROUP_VIEWS.map(({ value, label }) => {
+          const count = base.filter((g) => matchesView(g, value, now)).length
+          return (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              aria-selected={filters.view === value}
+              className={`view-tab${value === 'needs-input' && count > 0 ? ' view-tab-alert' : ''}`}
+              onClick={() => update({ view: value })}
+            >
+              {label} <span className="count">{count}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {visible.length === 0 ? (
+        <div className="empty">
+          <p>No groups match these filters.</p>
+          {!isDefault && (
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                setSearch('')
+                reset()
+              }}
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      ) : (
+        <ul className="plan-grid">
+          {visible.map((g) => (
+            <li key={g.id}>
+              <GroupCard group={g} now={now} />
+            </li>
+          ))}
+        </ul>
+      )}
     </>
   )
 }

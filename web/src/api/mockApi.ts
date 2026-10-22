@@ -22,7 +22,6 @@ import type {
 import { DEFAULT_SETTINGS } from '../lib/preferences'
 import { findCommonSlots, suggestTimes } from '../lib/time'
 
-
 interface StoredGroup {
   id: string
   title: string
@@ -127,7 +126,13 @@ function seed(): MockDb {
   const max: UserDto = { ...me, id: 'u-max', email: 'max@example.com', username: 'max', displayName: 'Max' }
   const tania: UserDto = { ...me, id: 'u-tania', email: 'tania@example.com', username: 'tania', displayName: 'Tania' }
   const olena: UserDto = { ...me, id: 'u-olena', email: 'olena@example.com', username: 'olena', displayName: 'Olena' }
-  const andrii: UserDto = { ...me, id: 'u-andrii', email: 'andrii@example.com', username: 'andrii', displayName: 'Andrii' }
+  const andrii: UserDto = {
+    ...me,
+    id: 'u-andrii',
+    email: 'andrii@example.com',
+    username: 'andrii',
+    displayName: 'Andrii',
+  }
   const sofia: UserDto = { ...me, id: 'u-sofia', email: 'sofia@example.com', username: 'sofia.k', displayName: 'Sofia' }
 
   const raw = {
@@ -324,15 +329,105 @@ function seed(): MockDb {
     ...raw,
     groups: raw.groups.map((g) => ({ ...g, options: [], votingDeadline: null }) as StoredGroup),
     notifications: [
-      { id: 'n-8', kind: 'FRIEND_REQUEST', groupId: null, groupTitle: null, pollId: null, pollTitle: null, actorName: 'Olena', createdAt: hoursAgo(1), read: false },
-      { id: 'n-9', kind: 'POLL_STARTED', groupId: null, groupTitle: null, pollId: 'p-saturday', pollTitle: 'What do we do on Saturday?', actorName: 'Tania', createdAt: hoursAgo(4), read: false },
-      { id: 'n-1', kind: 'VOTING_STARTED', groupId: 'g-study', groupTitle: 'Exam prep: ООАД', pollId: null, pollTitle: null, actorName: 'Max', createdAt: hoursAgo(2), read: false },
-      { id: 'n-2', kind: 'DEADLINE_SOON', groupId: 'g-board-games', groupTitle: 'Board games night', pollId: null, pollTitle: null, actorName: null, createdAt: hoursAgo(3), read: false },
-      { id: 'n-3', kind: 'EVENT_UPDATED', groupId: 'g-hiking', groupTitle: 'Hiking trip', pollId: null, pollTitle: null, actorName: 'Max', createdAt: hoursAgo(5), read: false },
-      { id: 'n-4', kind: 'INVITED', groupId: 'g-birthday', groupTitle: "Olena's birthday", pollId: null, pollTitle: null, actorName: 'Max', createdAt: hoursAgo(26), read: false },
-      { id: 'n-5', kind: 'EVENT_CONFIRMED', groupId: 'g-movie', groupTitle: 'Movie night', pollId: null, pollTitle: null, actorName: 'Tania', createdAt: hoursAgo(50), read: true },
-      { id: 'n-6', kind: 'MEMBER_JOINED', groupId: 'g-board-games', groupTitle: 'Board games night', pollId: null, pollTitle: null, actorName: 'Tania', createdAt: hoursAgo(74), read: true },
-      { id: 'n-7', kind: 'EVENT_CANCELLED', groupId: 'g-bowling', groupTitle: 'Bowling', pollId: null, pollTitle: null, actorName: 'Tania', createdAt: hoursAgo(98), read: true },
+      {
+        id: 'n-8',
+        kind: 'FRIEND_REQUEST',
+        groupId: null,
+        groupTitle: null,
+        pollId: null,
+        pollTitle: null,
+        actorName: 'Olena',
+        createdAt: hoursAgo(1),
+        read: false,
+      },
+      {
+        id: 'n-9',
+        kind: 'POLL_STARTED',
+        groupId: null,
+        groupTitle: null,
+        pollId: 'p-saturday',
+        pollTitle: 'What do we do on Saturday?',
+        actorName: 'Tania',
+        createdAt: hoursAgo(4),
+        read: false,
+      },
+      {
+        id: 'n-1',
+        kind: 'VOTING_STARTED',
+        groupId: 'g-study',
+        groupTitle: 'Exam prep: ООАД',
+        pollId: null,
+        pollTitle: null,
+        actorName: 'Max',
+        createdAt: hoursAgo(2),
+        read: false,
+      },
+      {
+        id: 'n-2',
+        kind: 'DEADLINE_SOON',
+        groupId: 'g-board-games',
+        groupTitle: 'Board games night',
+        pollId: null,
+        pollTitle: null,
+        actorName: null,
+        createdAt: hoursAgo(3),
+        read: false,
+      },
+      {
+        id: 'n-3',
+        kind: 'EVENT_UPDATED',
+        groupId: 'g-hiking',
+        groupTitle: 'Hiking trip',
+        pollId: null,
+        pollTitle: null,
+        actorName: 'Max',
+        createdAt: hoursAgo(5),
+        read: false,
+      },
+      {
+        id: 'n-4',
+        kind: 'INVITED',
+        groupId: 'g-birthday',
+        groupTitle: "Olena's birthday",
+        pollId: null,
+        pollTitle: null,
+        actorName: 'Max',
+        createdAt: hoursAgo(26),
+        read: false,
+      },
+      {
+        id: 'n-5',
+        kind: 'EVENT_CONFIRMED',
+        groupId: 'g-movie',
+        groupTitle: 'Movie night',
+        pollId: null,
+        pollTitle: null,
+        actorName: 'Tania',
+        createdAt: hoursAgo(50),
+        read: true,
+      },
+      {
+        id: 'n-6',
+        kind: 'MEMBER_JOINED',
+        groupId: 'g-board-games',
+        groupTitle: 'Board games night',
+        pollId: null,
+        pollTitle: null,
+        actorName: 'Tania',
+        createdAt: hoursAgo(74),
+        read: true,
+      },
+      {
+        id: 'n-7',
+        kind: 'EVENT_CANCELLED',
+        groupId: 'g-bowling',
+        groupTitle: 'Bowling',
+        pollId: null,
+        pollTitle: null,
+        actorName: 'Tania',
+        createdAt: hoursAgo(98),
+        read: true,
+      },
     ],
     friendCodes: {
       [me.id]: 'YOU7K2QX',
@@ -392,9 +487,24 @@ function seed(): MockDb {
   study.status = 'VOTING'
   study.votingDeadline = at(fri, 2, 20)
   study.options = [
-    { id: 'o-1', time: { start: at(fri, 3, 15), end: at(fri, 3, 17) }, freeUserIds: [me.id, max.id, tania.id], votes: { [max.id]: 'YES', [tania.id]: 'YES' } },
-    { id: 'o-2', time: { start: at(fri, 3, 14), end: at(fri, 3, 16) }, freeUserIds: [me.id, max.id], votes: { [max.id]: 'YES', [tania.id]: 'NO' } },
-    { id: 'o-3', time: { start: at(fri, 4, 10), end: at(fri, 4, 12) }, freeUserIds: [tania.id], votes: { [max.id]: 'MAYBE', [tania.id]: 'YES' } },
+    {
+      id: 'o-1',
+      time: { start: at(fri, 3, 15), end: at(fri, 3, 17) },
+      freeUserIds: [me.id, max.id, tania.id],
+      votes: { [max.id]: 'YES', [tania.id]: 'YES' },
+    },
+    {
+      id: 'o-2',
+      time: { start: at(fri, 3, 14), end: at(fri, 3, 16) },
+      freeUserIds: [me.id, max.id],
+      votes: { [max.id]: 'YES', [tania.id]: 'NO' },
+    },
+    {
+      id: 'o-3',
+      time: { start: at(fri, 4, 10), end: at(fri, 4, 12) },
+      freeUserIds: [tania.id],
+      votes: { [max.id]: 'MAYBE', [tania.id]: 'YES' },
+    },
   ]
   return data
 }
@@ -406,16 +516,29 @@ function normalize(data: Partial<MockDb>): MockDb {
     ...data,
     settings: { ...DEFAULT_SETTINGS, ...data.settings },
     connection: data.connection ?? null,
-    notifications: (data.notifications ?? []).map((n) => ({ ...n, pollId: n.pollId ?? null, pollTitle: n.pollTitle ?? null })),
+    notifications: (data.notifications ?? []).map((n) => ({
+      ...n,
+      pollId: n.pollId ?? null,
+      pollTitle: n.pollTitle ?? null,
+    })),
     users: (data.users ?? fresh.users).map((u) => ({
       ...u,
       photoUrl: u.photoUrl ?? null,
-      username: u.username ?? u.email.split('@')[0].toLowerCase().replace(/[^a-z0-9_.]/g, ''),
+      username:
+        u.username ??
+        u.email
+          .split('@')[0]
+          .toLowerCase()
+          .replace(/[^a-z0-9_.]/g, ''),
     })),
     friendCodes: { ...fresh.friendCodes, ...data.friendCodes },
     friendships: data.friendships ?? fresh.friendships,
     friendRequests: data.friendRequests ?? fresh.friendRequests,
-    polls: (data.polls ?? fresh.polls).map((p) => ({ ...p, options: p.options ?? [], participantIds: p.participantIds ?? [] })),
+    polls: (data.polls ?? fresh.polls).map((p) => ({
+      ...p,
+      options: p.options ?? [],
+      participantIds: p.participantIds ?? [],
+    })),
     groups: (data.groups ?? fresh.groups).map((g) => ({
       ...g,
       options: g.options ?? [],
@@ -889,12 +1012,33 @@ export const mockApi: Api = {
       }
 
       if (group.event && group.event.status === 'CONFIRMED') {
-        items.push({ ...base, id: group.event.id, kind: 'EVENT', title: group.event.title, time: group.event.time, location: group.event.location })
+        items.push({
+          ...base,
+          id: group.event.id,
+          kind: 'EVENT',
+          title: group.event.title,
+          time: group.event.time,
+          location: group.event.location,
+        })
       } else if (group.status === 'PLANNING' || group.status === 'VOTING') {
-        items.push({ ...base, id: `${group.id}-window`, kind: 'PLANNING', title: group.title, time: group.window, location: null })
+        items.push({
+          ...base,
+          id: `${group.id}-window`,
+          kind: 'PLANNING',
+          title: group.title,
+          time: group.window,
+          location: null,
+        })
         const mine = db.availability[group.id]?.[user.id] ?? []
         mine.forEach((slot, i) =>
-          items.push({ ...base, id: `${group.id}-free-${i}`, kind: 'MY_FREE_TIME', title: 'Free', time: slot, location: null }),
+          items.push({
+            ...base,
+            id: `${group.id}-free-${i}`,
+            kind: 'MY_FREE_TIME',
+            title: 'Free',
+            time: slot,
+            location: null,
+          }),
         )
       }
     }
@@ -932,7 +1076,8 @@ export const mockApi: Api = {
   async vote(groupId, optionId, answer) {
     const group = findGroup(groupId)
     if (group.status !== 'VOTING') throw new ApiError(409, 'Voting is closed')
-    if (group.votingDeadline && new Date(group.votingDeadline) < new Date()) throw new ApiError(409, 'The voting deadline has passed')
+    if (group.votingDeadline && new Date(group.votingDeadline) < new Date())
+      throw new ApiError(409, 'The voting deadline has passed')
     const option = group.options.find((o) => o.id === optionId)
     if (!option) throw new ApiError(404, 'Option not found')
     option.votes[me().id] = answer
@@ -954,7 +1099,8 @@ export const mockApi: Api = {
   async confirmEvent(groupId, body) {
     const group = findGroup(groupId)
     requireOrganizer(group)
-    if (group.status !== 'PLANNING' && group.status !== 'VOTING') throw new ApiError(409, 'The event is already scheduled')
+    if (group.status !== 'PLANNING' && group.status !== 'VOTING')
+      throw new ApiError(409, 'The event is already scheduled')
     group.event = { id: uid('e'), ...body, status: 'CONFIRMED' }
     group.status = 'SCHEDULED'
     group.options = []
@@ -975,7 +1121,10 @@ export const mockApi: Api = {
 
   async getNotifications() {
     me()
-    return delay([...db.notifications].sort((a, b) => b.createdAt.localeCompare(a.createdAt)), 150)
+    return delay(
+      [...db.notifications].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+      150,
+    )
   },
 
   async markNotificationsRead(ids) {
@@ -994,7 +1143,10 @@ export const mockApi: Api = {
         return { userId: u.id, displayName: u.displayName, username: u.username, email: u.email, since: f.since }
       })
       .sort((a, b) => a.displayName.localeCompare(b.displayName))
-    const request = (r: MockDb['friendRequests'][number], direction: FriendRequestDto['direction']): FriendRequestDto => ({
+    const request = (
+      r: MockDb['friendRequests'][number],
+      direction: FriendRequestDto['direction'],
+    ): FriendRequestDto => ({
       id: r.id,
       person: toPerson(direction === 'INCOMING' ? r.from : r.to),
       direction,
@@ -1138,10 +1290,18 @@ export const mockApi: Api = {
     const participants = [...new Set(body.participantIds)].filter((id) => id !== meId)
     if (participants.length === 0) throw new ApiError(422, 'Pick at least one friend')
     requireFriends(participants)
-    const options = [...new Map(body.options.map((o) => o.trim()).filter(Boolean).map((o) => [o.toLowerCase(), o])).values()]
+    const options = [
+      ...new Map(
+        body.options
+          .map((o) => o.trim())
+          .filter(Boolean)
+          .map((o) => [o.toLowerCase(), o]),
+      ).values(),
+    ]
     if (options.length < 2) throw new ApiError(422, 'Add at least two different options')
     if (options.length > MAX_POLL_OPTIONS) throw new ApiError(422, `At most ${MAX_POLL_OPTIONS} options`)
-    if (body.deadline && new Date(body.deadline) <= new Date()) throw new ApiError(422, 'The deadline must be in the future')
+    if (body.deadline && new Date(body.deadline) <= new Date())
+      throw new ApiError(422, 'The deadline must be in the future')
     const poll: StoredPoll = {
       id: uid('p'),
       title,

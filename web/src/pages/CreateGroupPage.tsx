@@ -74,16 +74,18 @@ export function CreateGroupPage() {
         <ArrowLeft size={16} aria-hidden="true" /> My groups
       </Link>
       <h1>New group</h1>
-      {poll.data && (
-        <p className="notice">
-          From the poll "{poll.data.title}". Friends who voted are already added.
-        </p>
-      )}
+      {poll.data && <p className="notice">From the poll "{poll.data.title}". Friends who voted are already added.</p>}
 
       <form className="card form" onSubmit={submit}>
         <label>
           Title
-          <input required maxLength={120} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Board games night" />
+          <input
+            required
+            maxLength={120}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Board games night"
+          />
         </label>
 
         <label>
@@ -99,11 +101,21 @@ export function CreateGroupPage() {
           <div className="row">
             <label>
               From
-              <input type="datetime-local" required value={window.start} onChange={(e) => setWindow({ ...window, start: e.target.value })} />
+              <input
+                type="datetime-local"
+                required
+                value={window.start}
+                onChange={(e) => setWindow({ ...window, start: e.target.value })}
+              />
             </label>
             <label>
               To
-              <input type="datetime-local" required value={window.end} onChange={(e) => setWindow({ ...window, end: e.target.value })} />
+              <input
+                type="datetime-local"
+                required
+                value={window.end}
+                onChange={(e) => setWindow({ ...window, end: e.target.value })}
+              />
             </label>
           </div>
         </fieldset>
@@ -112,11 +124,13 @@ export function CreateGroupPage() {
           <label>
             Event length
             <select value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
-              {[...new Set([...DURATIONS, prefs.defaultEventDurationMinutes])].sort((a, b) => a - b).map((m) => (
-                <option key={m} value={m}>
-                  {m < 60 ? `${m} min` : `${m / 60} h`}
-                </option>
-              ))}
+              {[...new Set([...DURATIONS, prefs.defaultEventDurationMinutes])]
+                .sort((a, b) => a - b)
+                .map((m) => (
+                  <option key={m} value={m}>
+                    {m < 60 ? `${m} min` : `${m / 60} h`}
+                  </option>
+                ))}
             </select>
           </label>
           <label>
@@ -134,7 +148,12 @@ export function CreateGroupPage() {
           {friends.data && friends.data.friends.length > 0 ? (
             <>
               <p className="hint">They join right away. You can also share an invite link later.</p>
-              <FriendPicker friends={friends.data.friends} selected={members} onChange={setMembers} label="Friends to invite" />
+              <FriendPicker
+                friends={friends.data.friends}
+                selected={members}
+                onChange={setMembers}
+                label="Friends to invite"
+              />
             </>
           ) : (
             <p className="hint">

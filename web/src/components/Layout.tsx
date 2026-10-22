@@ -77,11 +77,7 @@ export function Layout() {
                 <CalendarCheck size={14} aria-hidden="true" /> Google Calendar connected
               </button>
             ) : (
-              <button
-                type="button"
-                className="chip"
-                onClick={() => api.startCalendarConnect(window.location.pathname)}
-              >
+              <button type="button" className="chip" onClick={() => api.startCalendarConnect(window.location.pathname)}>
                 Connect Google Calendar
               </button>
             )}

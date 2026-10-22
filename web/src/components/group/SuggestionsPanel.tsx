@@ -40,7 +40,10 @@ export function SuggestionsPanel({ group, meId }: { group: GroupDto; meId: strin
 
   return (
     <Card title="Best times">
-      <div className="readiness readiness-lg" aria-label={`${ready.length} of ${group.members.length} marked free time`}>
+      <div
+        className="readiness readiness-lg"
+        aria-label={`${ready.length} of ${group.members.length} marked free time`}
+      >
         <div className="readiness-bar">
           <span style={{ width: `${(ready.length / group.members.length) * 100}%` }} />
         </div>
@@ -84,7 +87,10 @@ export function SuggestionsPanel({ group, meId }: { group: GroupDto; meId: strin
                     <span className="muted small">
                       {all
                         ? 'Everyone can make it'
-                        : [cant.length > 0 && `Can't: ${joinNames(cant)}`, notMarked.length > 0 && `Not marked yet: ${joinNames(notMarked)}`]
+                        : [
+                            cant.length > 0 && `Can't: ${joinNames(cant)}`,
+                            notMarked.length > 0 && `Not marked yet: ${joinNames(notMarked)}`,
+                          ]
                             .filter(Boolean)
                             .join(' · ')}
                     </span>
@@ -119,9 +125,7 @@ export function SuggestionsPanel({ group, meId }: { group: GroupDto; meId: strin
       {isOrganizer && list.length > 0 && (
         <StartVote group={group} options={list.filter((s) => chosen.has(s.time.start)).map((s) => s.time)} />
       )}
-      {!isOrganizer && (
-        <p className="hint">When everyone's in, {organizerName} starts a vote on the best times.</p>
-      )}
+      {!isOrganizer && <p className="hint">When everyone's in, {organizerName} starts a vote on the best times.</p>}
     </Card>
   )
 }

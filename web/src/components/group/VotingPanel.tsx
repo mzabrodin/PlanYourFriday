@@ -47,7 +47,9 @@ export function VotingPanel({ group, meId }: { group: GroupDto; meId: string | u
           <h2 id="voting-title" className="icon-line">
             <Vote size={22} aria-hidden="true" /> Vote for a time
           </h2>
-          <p className="muted small">Mark every time that works for you. Works = 2 points, maybe = 1. The most points wins.</p>
+          <p className="muted small">
+            Mark every time that works for you. Works = 2 points, maybe = 1. The most points wins.
+          </p>
         </div>
         <div className="voting-meta">
           {group.votingDeadline && (
@@ -81,7 +83,9 @@ export function VotingPanel({ group, meId }: { group: GroupDto; meId: string | u
                 <div>
                   <p className="option-time">{formatRange(o.time)}</p>
                   <p className="muted small">
-                    {o.freeUserIds.length === total ? 'Everyone marked this as free' : `${o.freeUserIds.length}/${total} marked this as free`}
+                    {o.freeUserIds.length === total
+                      ? 'Everyone marked this as free'
+                      : `${o.freeUserIds.length}/${total} marked this as free`}
                   </p>
                 </div>
               </div>
@@ -101,15 +105,28 @@ export function VotingPanel({ group, meId }: { group: GroupDto; meId: string | u
                 ))}
               </div>
 
-              <div className="tally" aria-label={`${count('YES')} works, ${count('MAYBE')} if needed, ${count('NO')} can't`}>
+              <div
+                className="tally"
+                aria-label={`${count('YES')} works, ${count('MAYBE')} if needed, ${count('NO')} can't`}
+              >
                 <span className="tally-yes" style={{ width: `${(count('YES') / total) * 100}%` }} />
                 <span className="tally-maybe" style={{ width: `${(count('MAYBE') / total) * 100}%` }} />
                 <span className="tally-no" style={{ width: `${(count('NO') / total) * 100}%` }} />
               </div>
               <ul className="voters">
                 {o.votes.map((v) => (
-                  <li key={v.userId} className={`voter voter-${v.answer.toLowerCase()}`} title={ANSWERS.find((a) => a.value === v.answer)!.label}>
-                    {v.answer === 'YES' ? <Check size={12} /> : v.answer === 'MAYBE' ? <CircleHelp size={12} /> : <X size={12} />}
+                  <li
+                    key={v.userId}
+                    className={`voter voter-${v.answer.toLowerCase()}`}
+                    title={ANSWERS.find((a) => a.value === v.answer)!.label}
+                  >
+                    {v.answer === 'YES' ? (
+                      <Check size={12} />
+                    ) : v.answer === 'MAYBE' ? (
+                      <CircleHelp size={12} />
+                    ) : (
+                      <X size={12} />
+                    )}
                     {names.get(v.userId)}
                   </li>
                 ))}
@@ -129,7 +146,9 @@ export function VotingPanel({ group, meId }: { group: GroupDto; meId: string | u
 
       <footer className="voting-footer">
         <span className="muted small">
-          {notVoted.length > 0 ? `Waiting for ${joinNames(notVoted.map((m) => names.get(m.userId)!))}` : 'Everyone has voted'}
+          {notVoted.length > 0
+            ? `Waiting for ${joinNames(notVoted.map((m) => names.get(m.userId)!))}`
+            : 'Everyone has voted'}
         </span>
         {isOrganizer && (
           <button

@@ -4,7 +4,11 @@ export function AvatarStack({ names, max = 4 }: { names: string[]; max?: number 
   return (
     <div className="avatar-stack" aria-label={names.join(', ')} title={names.join(', ')}>
       {shown.map((name, i) => (
-        <span key={`${name}-${i}`} className={`avatar-chip${name === 'You' ? ' avatar-you' : ''}`} style={{ zIndex: max - i }}>
+        <span
+          key={`${name}-${i}`}
+          className={`avatar-chip${name === 'You' ? ' avatar-you' : ''}`}
+          style={{ zIndex: max - i }}
+        >
           {name.slice(0, 1).toUpperCase()}
         </span>
       ))}

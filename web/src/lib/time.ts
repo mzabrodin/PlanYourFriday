@@ -34,11 +34,7 @@ export function intersectRanges(a: TimeRange[], b: TimeRange[]): TimeRange[] {
   return result
 }
 
-export function findCommonSlots(
-  memberSlots: TimeRange[][],
-  window: TimeRange,
-  minMinutes: number,
-): TimeRange[] {
+export function findCommonSlots(memberSlots: TimeRange[][], window: TimeRange, minMinutes: number): TimeRange[] {
   if (memberSlots.length === 0) return []
   const common = memberSlots.reduce((acc, slots) => intersectRanges(acc, slots), [window])
   return common.filter((r) => toMs(r.end) - toMs(r.start) >= minMinutes * 60_000)

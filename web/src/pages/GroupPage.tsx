@@ -84,84 +84,107 @@ export function GroupPage() {
       {g.status === 'VOTING' && <VotingPanel group={g} meId={me?.id} />}
 
       <div className={`group-layout${g.status === 'SCHEDULED' ? ' group-layout-single' : ''}`}>
-        <Collapsible collapsed={g.status === 'SCHEDULED' || g.status === 'CANCELLED'} summary="Free time everyone marked">
-        <Card
-          title={canEdit ? 'When are you free?' : 'Availability'}
-          actions={
-            canEdit && (
-              <>
-                {hasUsualHours && (
-                  <button
-                    type="button"
-                    className="btn"
-                    title="Adds your usual free hours from Settings to every day of the window"
-                    onClick={() => setDraft(mergeRanges([...mySlots, ...usualSlots(g.window, prefs.usualFreeTime)]))}
-                  >
-                    Fill my usual hours
-                  </button>
-                )}
-                {me?.calendarConnected ? (
-                  <button type="button" className="btn" disabled={importCalendar.isPending} onClick={importFromCalendar}>
-                    {importCalendar.isPending ? 'Importing…' : 'Import from Google Calendar'}
-                  </button>
-                ) : (
-                  <button type="button" className="btn" onClick={() => api.startCalendarConnect(window.location.pathname)}>
-                    Connect Google Calendar to import
-                  </button>
-                )}
-              </>
-            )
-          }
+        <Collapsible
+          collapsed={g.status === 'SCHEDULED' || g.status === 'CANCELLED'}
+          summary="Free time everyone marked"
         >
-          {canEdit ? (
-            <p className="hint">Drag on the calendar to add free time. Drag or resize to adjust, click a block to remove it.</p>
-          ) : (
-            <p className="hint">
-              {g.status === 'PLANNING'
-                ? 'The availability deadline has passed.'
-                : g.status === 'VOTING'
-                  ? 'Free time is locked while the group votes. Highlighted: the times being voted on.'
-                  : 'Free time is closed for this group.'}
-            </p>
-          )}
+          <Card
+            title={canEdit ? 'When are you free?' : 'Availability'}
+            actions={
+              canEdit && (
+                <>
+                  {hasUsualHours && (
+                    <button
+                      type="button"
+                      className="btn"
+                      title="Adds your usual free hours from Settings to every day of the window"
+                      onClick={() => setDraft(mergeRanges([...mySlots, ...usualSlots(g.window, prefs.usualFreeTime)]))}
+                    >
+                      Fill my usual hours
+                    </button>
+                  )}
+                  {me?.calendarConnected ? (
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={importCalendar.isPending}
+                      onClick={importFromCalendar}
+                    >
+                      {importCalendar.isPending ? 'Importing…' : 'Import from Google Calendar'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => api.startCalendarConnect(window.location.pathname)}
+                    >
+                      Connect Google Calendar to import
+                    </button>
+                  )}
+                </>
+              )
+            }
+          >
+            {canEdit ? (
+              <p className="hint">
+                Drag on the calendar to add free time. Drag or resize to adjust, click a block to remove it.
+              </p>
+            ) : (
+              <p className="hint">
+                {g.status === 'PLANNING'
+                  ? 'The availability deadline has passed.'
+                  : g.status === 'VOTING'
+                    ? 'Free time is locked while the group votes. Highlighted: the times being voted on.'
+                    : 'Free time is closed for this group.'}
+              </p>
+            )}
 
-          {g.status === 'PLANNING' && <Legend />}
+            {g.status === 'PLANNING' && <Legend />}
 
-          {availability.error ? (
-            <ErrorState error={availability.error} onRetry={availability.refetch} />
-          ) : (
-            <AvailabilityCalendar
-              window={g.window}
-              mySlots={mySlots}
-              otherSlots={otherSlots}
-              optimalSlots={
-                g.status === 'PLANNING' ? (optimal.data ?? []) : g.status === 'VOTING' ? g.options.map((o) => o.time) : []
-              }
-              event={g.event}
-              editable={canEdit}
-              onChange={setDraft}
-            />
-          )}
+            {availability.error ? (
+              <ErrorState error={availability.error} onRetry={availability.refetch} />
+            ) : (
+              <AvailabilityCalendar
+                window={g.window}
+                mySlots={mySlots}
+                otherSlots={otherSlots}
+                optimalSlots={
+                  g.status === 'PLANNING'
+                    ? (optimal.data ?? [])
+                    : g.status === 'VOTING'
+                      ? g.options.map((o) => o.time)
+                      : []
+                }
+                event={g.event}
+                editable={canEdit}
+                onChange={setDraft}
+              />
+            )}
 
-          <InlineError error={update.error ?? importCalendar.error} />
+            <InlineError error={update.error ?? importCalendar.error} />
 
-          {canEdit && (
-            <div className="save-bar" data-dirty={draft !== null}>
-              <span className="muted small">{draft ? 'You have unsaved changes' : 'All changes saved'}</span>
-              <button type="button" className="btn btn-ghost" disabled={!draft || update.isPending} onClick={() => setDraft(null)}>
-                Discard
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={!draft || update.isPending}
-                onClick={() => draft && update.mutate(draft, { onSuccess: () => setDraft(null) })}
-              >
-                {update.isPending ? 'Saving…' : 'Save my free time'}
-              </button>
-            </div>
-          )}
-        </Card>
+            {canEdit && (
+              <div className="save-bar" data-dirty={draft !== null}>
+                <span className="muted small">{draft ? 'You have unsaved changes' : 'All changes saved'}</span>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  disabled={!draft || update.isPending}
+                  onClick={() => setDraft(null)}
+                >
+                  Discard
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={!draft || update.isPending}
+                  onClick={() => draft && update.mutate(draft, { onSuccess: () => setDraft(null) })}
+                >
+                  {update.isPending ? 'Saving…' : 'Save my free time'}
+                </button>
+              </div>
+            )}
+          </Card>
         </Collapsible>
 
         <aside className="stack">
@@ -192,7 +215,7 @@ function Legend() {
 const PHASES = [
   { key: 'PLANNING', label: 'Mark free time' },
   { key: 'VOTING', label: 'Vote on a time' },
-  { key: 'SCHEDULED', label: 'It\'s on' },
+  { key: 'SCHEDULED', label: "It's on" },
 ] as const
 
 function PhaseSteps({ status }: { status: GroupDto['status'] }) {
@@ -201,7 +224,11 @@ function PhaseSteps({ status }: { status: GroupDto['status'] }) {
   return (
     <ol className="phase-steps" aria-label="Planning progress">
       {PHASES.map((p, i) => (
-        <li key={p.key} className={i < current ? 'done' : i === current ? 'current' : ''} aria-current={i === current ? 'step' : undefined}>
+        <li
+          key={p.key}
+          className={i < current ? 'done' : i === current ? 'current' : ''}
+          aria-current={i === current ? 'step' : undefined}
+        >
           <span className="phase-pill">
             <span className="phase-dot">{i < current ? <Check size={12} aria-hidden="true" /> : i + 1}</span>
             {p.label}

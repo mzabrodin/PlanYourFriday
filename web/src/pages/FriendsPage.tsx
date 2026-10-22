@@ -47,11 +47,26 @@ export function FriendsPage() {
             <Card title={`Friend requests · ${data.incoming.length}`}>
               <ul className="person-list">
                 {data.incoming.map((r) => (
-                  <PersonRow key={r.id} displayName={r.person.displayName} username={r.person.username} detail="wants to be friends">
-                    <button type="button" className="btn btn-primary btn-small" disabled={accept.isPending} onClick={() => accept.mutate(r.id)}>
+                  <PersonRow
+                    key={r.id}
+                    displayName={r.person.displayName}
+                    username={r.person.username}
+                    detail="wants to be friends"
+                  >
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-small"
+                      disabled={accept.isPending}
+                      onClick={() => accept.mutate(r.id)}
+                    >
                       <Check size={14} aria-hidden="true" /> Accept
                     </button>
-                    <button type="button" className="btn btn-ghost btn-small" disabled={removeRequest.isPending} onClick={() => removeRequest.mutate(r.id)}>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-small"
+                      disabled={removeRequest.isPending}
+                      onClick={() => removeRequest.mutate(r.id)}
+                    >
                       Decline
                     </button>
                   </PersonRow>
@@ -67,7 +82,12 @@ export function FriendsPage() {
             ) : (
               <ul className="person-list">
                 {data.friends.map((f) => (
-                  <PersonRow key={f.userId} displayName={f.displayName} username={f.username} detail={`since ${formatDate(f.since)}`}>
+                  <PersonRow
+                    key={f.userId}
+                    displayName={f.displayName}
+                    username={f.username}
+                    detail={`since ${formatDate(f.since)}`}
+                  >
                     <button
                       type="button"
                       className="icon-button"
@@ -91,8 +111,18 @@ export function FriendsPage() {
             <Card title="Waiting for an answer">
               <ul className="person-list">
                 {data.outgoing.map((r) => (
-                  <PersonRow key={r.id} displayName={r.person.displayName} username={r.person.username} detail="request sent">
-                    <button type="button" className="btn btn-ghost btn-small" disabled={removeRequest.isPending} onClick={() => removeRequest.mutate(r.id)}>
+                  <PersonRow
+                    key={r.id}
+                    displayName={r.person.displayName}
+                    username={r.person.username}
+                    detail="request sent"
+                  >
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-small"
+                      disabled={removeRequest.isPending}
+                      onClick={() => removeRequest.mutate(r.id)}
+                    >
                       <X size={14} aria-hidden="true" /> Cancel
                     </button>
                   </PersonRow>
@@ -196,8 +226,9 @@ function FindPeople() {
           spellCheck={false}
         />
       </label>
-      {!tooShort && search.data && (
-        search.data.length === 0 ? (
+      {!tooShort &&
+        search.data &&
+        (search.data.length === 0 ? (
           <p className="muted small search-empty">Nobody found for "{debounced}".</p>
         ) : (
           <ul className="person-list">
@@ -207,8 +238,7 @@ function FindPeople() {
               </PersonRow>
             ))}
           </ul>
-        )
-      )}
+        ))}
       <InlineError error={search.error} />
     </Card>
   )
@@ -229,13 +259,23 @@ function RelationAction({ person }: { person: PersonDto }) {
       return <span className="badge badge-muted">Requested</span>
     case 'REQUEST_RECEIVED':
       return (
-        <button type="button" className="btn btn-primary btn-small" disabled={send.isPending} onClick={() => send.mutate(person.userId)}>
+        <button
+          type="button"
+          className="btn btn-primary btn-small"
+          disabled={send.isPending}
+          onClick={() => send.mutate(person.userId)}
+        >
           <Check size={14} aria-hidden="true" /> Accept
         </button>
       )
     default:
       return (
-        <button type="button" className="btn btn-small" disabled={send.isPending} onClick={() => send.mutate(person.userId)}>
+        <button
+          type="button"
+          className="btn btn-small"
+          disabled={send.isPending}
+          onClick={() => send.mutate(person.userId)}
+        >
           <UserPlus size={14} aria-hidden="true" /> Add
         </button>
       )

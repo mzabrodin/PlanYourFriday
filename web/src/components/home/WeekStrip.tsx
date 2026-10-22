@@ -29,7 +29,8 @@ export function WeekStrip({ groups, now }: { groups: GroupSummaryDto[]; now: num
     for (const g of groups) {
       if (g.status === 'CANCELLED') continue
       if (g.event && overlaps(g.event.time.start, g.event.time.end)) items.push({ group: g, time: g.event.time.start })
-      else if ((g.status === 'PLANNING' || g.status === 'VOTING') && overlaps(g.window.start, g.window.end)) items.push({ group: g, time: null })
+      else if ((g.status === 'PLANNING' || g.status === 'VOTING') && overlaps(g.window.start, g.window.end))
+        items.push({ group: g, time: null })
     }
     return items.sort((a, b) => Number(a.time === null) - Number(b.time === null))
   }
@@ -47,7 +48,10 @@ export function WeekStrip({ groups, now }: { groups: GroupSummaryDto[]; now: num
           const items = itemsFor(day)
           const isFriday = day.start.getDay() === 5
           return (
-            <li key={day.start.toISOString()} className={`day${i === 0 ? ' day-today' : ''}${isFriday ? ' day-friday' : ''}`}>
+            <li
+              key={day.start.toISOString()}
+              className={`day${i === 0 ? ' day-today' : ''}${isFriday ? ' day-friday' : ''}`}
+            >
               <div className="day-head">
                 <span className="day-name">{i === 0 ? 'Today' : weekday.format(day.start)}</span>
                 <span className="day-num">{day.start.getDate()}</span>
@@ -62,7 +66,12 @@ export function WeekStrip({ groups, now }: { groups: GroupSummaryDto[]; now: num
                     style={{ '--group': STAGE_COLOR[stageOf(group, now)] } as CSSProperties}
                     title={group.title}
                   >
-                    {time ? <strong>{formatTime(time)}</strong> : <Vote size={12} aria-hidden="true" className="chip-icon" />} {group.title}
+                    {time ? (
+                      <strong>{formatTime(time)}</strong>
+                    ) : (
+                      <Vote size={12} aria-hidden="true" className="chip-icon" />
+                    )}{' '}
+                    {group.title}
                   </Link>
                 ))}
                 {items.length > 3 && <span className="muted small">+{items.length - 3} more</span>}

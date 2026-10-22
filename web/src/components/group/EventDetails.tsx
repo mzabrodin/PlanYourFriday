@@ -173,7 +173,11 @@ function CalendarSyncLine({ status }: { status: EventDto['myCalendarSync'] }) {
       return (
         <p className="sync-line">
           <CalendarDays size={16} aria-hidden="true" /> Not in your Google Calendar.{' '}
-          <button type="button" className="link-button" onClick={() => api.startCalendarConnect(window.location.pathname)}>
+          <button
+            type="button"
+            className="link-button"
+            onClick={() => api.startCalendarConnect(window.location.pathname)}
+          >
             Connect it
           </button>{' '}
           or download the .ics file.

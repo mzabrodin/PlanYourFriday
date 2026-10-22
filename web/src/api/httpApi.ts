@@ -31,15 +31,13 @@ export const httpApi: Api = {
     window.location.assign(`/api/calendar-connections/google/connect?${returnParam(returnTo)}`),
   disconnectCalendar: () => request('/calendar-connections/primary', { method: 'DELETE' }),
   getCalendarConnections: () => request('/calendar-connections'),
-  updateCalendarConnection: (id, body) =>
-    request(`/calendar-connections/${id}`, { method: 'PATCH', body: json(body) }),
+  updateCalendarConnection: (id, body) => request(`/calendar-connections/${id}`, { method: 'PATCH', body: json(body) }),
 
   listGroups: () => request('/groups'),
   getGroup: (groupId) => request(`/groups/${groupId}`),
   createGroup: (body) => request('/groups', { method: 'POST', body: json(body) }),
   joinGroup: (inviteToken) => request(`/groups/join/${encodeURIComponent(inviteToken)}`, { method: 'POST' }),
-  invite: (groupId, emails) =>
-    request(`/groups/${groupId}/invitations`, { method: 'POST', body: json({ emails }) }),
+  invite: (groupId, emails) => request(`/groups/${groupId}/invitations`, { method: 'POST', body: json({ emails }) }),
   revokeInvitation: (invitationId) => request(`/invitations/${invitationId}`, { method: 'DELETE' }),
 
   getAvailability: (groupId) => request(`/groups/${groupId}/availability`),
@@ -54,8 +52,7 @@ export const httpApi: Api = {
     request(`/groups/${groupId}/options/${optionId}/vote`, { method: 'PUT', body: json({ answer }) }),
   cancelVoting: (groupId) => request(`/groups/${groupId}/voting`, { method: 'DELETE' }),
 
-  getCalendar: ({ start, end }) =>
-    request(`/calendar?from=${encodeURIComponent(start)}&to=${encodeURIComponent(end)}`),
+  getCalendar: ({ start, end }) => request(`/calendar?from=${encodeURIComponent(start)}&to=${encodeURIComponent(end)}`),
 
   confirmEvent: (groupId, body) => request(`/groups/${groupId}/event`, { method: 'POST', body: json(body) }),
   cancelEvent: (eventId) => request(`/events/${eventId}`, { method: 'DELETE' }),

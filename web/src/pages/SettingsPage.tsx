@@ -2,7 +2,13 @@ import { Bell, CalendarClock, CalendarDays, Palette, ShieldCheck, User } from 'l
 import { useEffect, useRef, useState } from 'react'
 import { useBlocker } from 'react-router'
 import { api } from '../api'
-import type { CalendarConnectionDto, DailyHours, UpdateCalendarConnectionRequest, UserDto, UserSettingsDto } from '../api'
+import type {
+  CalendarConnectionDto,
+  DailyHours,
+  UpdateCalendarConnectionRequest,
+  UserDto,
+  UserSettingsDto,
+} from '../api'
 import {
   useCalendarConnections,
   useDeleteAccount,
@@ -49,7 +55,8 @@ function useActiveSection(ids: readonly string[]): string {
       if (el) observer.observe(el)
     }
     const onScroll = () => {
-      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) setActive(ids[ids.length - 1])
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4)
+        setActive(ids[ids.length - 1])
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => {
@@ -119,9 +126,7 @@ function SettingsForm({
   const dirty = profileDirty || prefsDirty || calendarsDirty
   const saving = updateProfile.isPending || updateSettings.isPending || updateConnection.isPending
   const nameError = profile.displayName.trim() === '' ? 'Name cannot be empty' : null
-  const usernameError = USERNAME_RE.test(profile.username)
-    ? null
-    : 'Use 3–30 lowercase letters, numbers, _ or .'
+  const usernameError = USERNAME_RE.test(profile.username) ? null : 'Use 3–30 lowercase letters, numbers, _ or .'
   const formError = nameError ?? usernameError
 
   const connectionKey = connection ? `${connection.id}:${connection.status}` : 'none'
@@ -138,7 +143,9 @@ function SettingsForm({
   useEffect(() => applyTheme(prefs.theme), [prefs.theme])
   useEffect(() => () => applyTheme(savedTheme.current), [])
 
-  const blocker = useBlocker(({ currentLocation, nextLocation }) => dirty && currentLocation.pathname !== nextLocation.pathname)
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) => dirty && currentLocation.pathname !== nextLocation.pathname,
+  )
   useEffect(() => {
     if (blocker.state !== 'blocked') return
     if (window.confirm('You have unsaved changes. Leave without saving?')) blocker.proceed()
@@ -160,7 +167,12 @@ function SettingsForm({
   async function save() {
     if (formError) return
     await Promise.allSettled([
-      profileDirty && updateProfile.mutateAsync({ displayName: profile.displayName.trim(), username: profile.username, timeZone: profile.timeZone }),
+      profileDirty &&
+        updateProfile.mutateAsync({
+          displayName: profile.displayName.trim(),
+          username: profile.username,
+          timeZone: profile.timeZone,
+        }),
       prefsDirty && updateSettings.mutateAsync(prefs),
       calendarsDirty && connection && calendars && updateConnection.mutateAsync({ id: connection.id, body: calendars }),
     ])
@@ -169,7 +181,9 @@ function SettingsForm({
   const activeSection = useActiveSection(SECTION_IDS)
   useEffect(() => {
     if (!window.matchMedia('(max-width: 800px)').matches) return
-    document.querySelector(`.settings-nav a[href="#${activeSection}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    document
+      .querySelector(`.settings-nav a[href="#${activeSection}"]`)
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
   }, [activeSection])
 
   const setNotif = (patch: Partial<UserSettingsDto['notifications']>) =>
@@ -208,7 +222,11 @@ function SettingsForm({
               </div>
             </div>
 
-            <SettingRow title="Display name" description="Shown on group pages, invites and calendar events." htmlFor="displayName">
+            <SettingRow
+              title="Display name"
+              description="Shown on group pages, invites and calendar events."
+              htmlFor="displayName"
+            >
               <input
                 id="displayName"
                 maxLength={60}
@@ -219,7 +237,11 @@ function SettingsForm({
               {nameError && <p className="inline-error">{nameError}</p>}
             </SettingRow>
 
-            <SettingRow title="Username" description="Friends can find you by it. Lowercase letters, numbers, _ and ." htmlFor="username">
+            <SettingRow
+              title="Username"
+              description="Friends can find you by it. Lowercase letters, numbers, _ and ."
+              htmlFor="username"
+            >
               <div className="prefixed-input">
                 <span aria-hidden="true">@</span>
                 <input
@@ -228,7 +250,9 @@ function SettingsForm({
                   autoComplete="off"
                   spellCheck={false}
                   value={profile.username}
-                  onChange={(e) => setProfile({ ...profile, username: e.target.value.toLowerCase().replace(/\s/g, '') })}
+                  onChange={(e) =>
+                    setProfile({ ...profile, username: e.target.value.toLowerCase().replace(/\s/g, '') })
+                  }
                   aria-invalid={!!usernameError}
                 />
               </div>
@@ -256,8 +280,17 @@ function SettingsForm({
 
           <CalendarSection connection={connection} draft={calendars} onChange={setCalendars} />
 
-          <SettingsSection id="planning" icon={CalendarClock} title="Planning" description="Shortcuts for creating groups and marking free time.">
-            <SettingRow title="Default event length" description="Pre-selected when you create a new group." htmlFor="defaultDuration">
+          <SettingsSection
+            id="planning"
+            icon={CalendarClock}
+            title="Planning"
+            description="Shortcuts for creating groups and marking free time."
+          >
+            <SettingRow
+              title="Default event length"
+              description="Pre-selected when you create a new group."
+              htmlFor="defaultDuration"
+            >
               <select
                 id="defaultDuration"
                 value={prefs.defaultEventDurationMinutes}
@@ -274,26 +307,62 @@ function SettingsForm({
             <div className="setting-group">
               <p className="setting-title">My usual free time</p>
               <p className="setting-desc">
-                “Fill my usual hours” on a group's calendar adds these hours to every day of the planning window. You can
-                still adjust them after.
+                “Fill my usual hours” on a group's calendar adds these hours to every day of the planning window. You
+                can still adjust them after.
               </p>
-              <UsualHoursRow label="Weekdays" hint="Mon–Fri" value={prefs.usualFreeTime.weekdays} fallback={{ start: '18:00', end: '23:00' }} onChange={(h) => setUsual('weekdays', h)} />
-              <UsualHoursRow label="Weekends" hint="Sat–Sun" value={prefs.usualFreeTime.weekends} fallback={{ start: '12:00', end: '23:00' }} onChange={(h) => setUsual('weekends', h)} />
+              <UsualHoursRow
+                label="Weekdays"
+                hint="Mon–Fri"
+                value={prefs.usualFreeTime.weekdays}
+                fallback={{ start: '18:00', end: '23:00' }}
+                onChange={(h) => setUsual('weekdays', h)}
+              />
+              <UsualHoursRow
+                label="Weekends"
+                hint="Sat–Sun"
+                value={prefs.usualFreeTime.weekends}
+                fallback={{ start: '12:00', end: '23:00' }}
+                onChange={(h) => setUsual('weekends', h)}
+              />
             </div>
           </SettingsSection>
 
-          <SettingsSection id="notifications" icon={Bell} title="Notifications" description={`You always get notifications in the app (the bell). Choose what we also email to ${user.email}.`}>
+          <SettingsSection
+            id="notifications"
+            icon={Bell}
+            title="Notifications"
+            description={`You always get notifications in the app (the bell). Choose what we also email to ${user.email}.`}
+          >
             <SettingRow title="Invitations" description="When someone invites you to a group.">
-              <Switch label="Invitations" checked={prefs.notifications.invitations} onChange={(v) => setNotif({ invitations: v })} />
+              <Switch
+                label="Invitations"
+                checked={prefs.notifications.invitations}
+                onChange={(v) => setNotif({ invitations: v })}
+              />
             </SettingRow>
-            <SettingRow title="Deadline reminders" description="A nudge a day before the availability deadline if you haven't marked free time.">
-              <Switch label="Deadline reminders" checked={prefs.notifications.deadlineReminders} onChange={(v) => setNotif({ deadlineReminders: v })} />
+            <SettingRow
+              title="Deadline reminders"
+              description="A nudge a day before the availability deadline if you haven't marked free time."
+            >
+              <Switch
+                label="Deadline reminders"
+                checked={prefs.notifications.deadlineReminders}
+                onChange={(v) => setNotif({ deadlineReminders: v })}
+              />
             </SettingRow>
             <SettingRow title="Event confirmed" description="When the organizer picks the final time.">
-              <Switch label="Event confirmed" checked={prefs.notifications.eventConfirmed} onChange={(v) => setNotif({ eventConfirmed: v })} />
+              <Switch
+                label="Event confirmed"
+                checked={prefs.notifications.eventConfirmed}
+                onChange={(v) => setNotif({ eventConfirmed: v })}
+              />
             </SettingRow>
             <SettingRow title="Event cancelled" description="When a confirmed event is cancelled.">
-              <Switch label="Event cancelled" checked={prefs.notifications.eventCancelled} onChange={(v) => setNotif({ eventCancelled: v })} />
+              <Switch
+                label="Event cancelled"
+                checked={prefs.notifications.eventCancelled}
+                onChange={(v) => setNotif({ eventCancelled: v })}
+              />
             </SettingRow>
             <SettingRow title="Reminder before an event" description="So nobody forgets the plan.">
               <div className="inline-controls">
@@ -309,7 +378,11 @@ function SettingsForm({
                     </option>
                   ))}
                 </select>
-                <Switch label="Reminder before an event" checked={prefs.notifications.eventReminder} onChange={(v) => setNotif({ eventReminder: v })} />
+                <Switch
+                  label="Reminder before an event"
+                  checked={prefs.notifications.eventReminder}
+                  onChange={(v) => setNotif({ eventReminder: v })}
+                />
               </div>
             </SettingRow>
           </SettingsSection>
@@ -418,15 +491,29 @@ function UsualHoursRow({
 }) {
   return (
     <div className="usual-row">
-      <Switch label={`Free on ${label.toLowerCase()}`} checked={value !== null} onChange={(on) => onChange(on ? fallback : null)} />
+      <Switch
+        label={`Free on ${label.toLowerCase()}`}
+        checked={value !== null}
+        onChange={(on) => onChange(on ? fallback : null)}
+      />
       <span className="usual-label">
         {label} <span className="muted small">{hint}</span>
       </span>
       {value ? (
         <span className="usual-times">
-          <input type="time" aria-label={`${label} from`} value={value.start} onChange={(e) => onChange({ ...value, start: e.target.value })} />
+          <input
+            type="time"
+            aria-label={`${label} from`}
+            value={value.start}
+            onChange={(e) => onChange({ ...value, start: e.target.value })}
+          />
           <span className="muted">–</span>
-          <input type="time" aria-label={`${label} to`} value={value.end} onChange={(e) => onChange({ ...value, end: e.target.value })} />
+          <input
+            type="time"
+            aria-label={`${label} to`}
+            value={value.end}
+            onChange={(e) => onChange({ ...value, end: e.target.value })}
+          />
         </span>
       ) : (
         <span className="muted small">Usually busy</span>
@@ -453,8 +540,8 @@ function CalendarSection({
       <SettingsSection id="calendar" icon={CalendarDays} title="Google Calendar">
         <div className="connect-empty">
           <p>
-            Connect Google Calendar to import your busy times into groups and to get confirmed events added to your calendar
-            automatically.
+            Connect Google Calendar to import your busy times into groups and to get confirmed events added to your
+            calendar automatically.
           </p>
           <p className="muted small">We only read when you're busy, never the details of your events.</p>
           <button type="button" className="btn btn-primary" onClick={() => api.startCalendarConnect(returnTo)}>
@@ -494,7 +581,11 @@ function CalendarSection({
             className="btn btn-danger"
             disabled={disconnect.isPending}
             onClick={() => {
-              if (window.confirm('Disconnect Google Calendar? Busy times won\'t be imported and new events won\'t be added to your calendar.')) {
+              if (
+                window.confirm(
+                  "Disconnect Google Calendar? Busy times won't be imported and new events won't be added to your calendar.",
+                )
+              ) {
                 disconnect.mutate()
               }
             }}
@@ -512,7 +603,11 @@ function CalendarSection({
           {connection.calendars.map((c) => (
             <li key={c.id}>
               <label>
-                <input type="checkbox" checked={draft.busyCalendarIds.includes(c.id)} onChange={(e) => toggleBusy(c.id, e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={draft.busyCalendarIds.includes(c.id)}
+                  onChange={(e) => toggleBusy(c.id, e.target.checked)}
+                />
                 <span className="cal-dot" style={{ background: c.color }} />
                 {c.name}
                 {c.primary && <span className="muted small"> · primary</span>}
@@ -525,8 +620,16 @@ function CalendarSection({
         )}
       </div>
 
-      <SettingRow title="Add confirmed events to" description="Where events from PlanYourFriday appear." htmlFor="writeCalendar">
-        <select id="writeCalendar" value={draft.writeCalendarId} onChange={(e) => onChange({ ...draft, writeCalendarId: e.target.value })}>
+      <SettingRow
+        title="Add confirmed events to"
+        description="Where events from PlanYourFriday appear."
+        htmlFor="writeCalendar"
+      >
+        <select
+          id="writeCalendar"
+          value={draft.writeCalendarId}
+          onChange={(e) => onChange({ ...draft, writeCalendarId: e.target.value })}
+        >
           {connection.calendars.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -599,8 +702,8 @@ function AccountSection({ email }: { email: string }) {
           <div className="setting-text">
             <span className="setting-title">Delete account</span>
             <p className="setting-desc">
-              Removes your profile, free time and calendar connection, and takes you out of all groups. Groups you organize
-              are cancelled for everyone. This can't be undone.
+              Removes your profile, free time and calendar connection, and takes you out of all groups. Groups you
+              organize are cancelled for everyone. This can't be undone.
             </p>
           </div>
           {!confirmOpen && (
@@ -637,7 +740,11 @@ function AccountSection({ email }: { email: string }) {
               >
                 Cancel
               </button>
-              <button type="submit" className="btn btn-danger-solid" disabled={confirmText !== email || deleteAccount.isPending}>
+              <button
+                type="submit"
+                className="btn btn-danger-solid"
+                disabled={confirmText !== email || deleteAccount.isPending}
+              >
                 {deleteAccount.isPending ? 'Deleting…' : 'Delete my account'}
               </button>
             </div>

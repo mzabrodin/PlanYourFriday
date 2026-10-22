@@ -80,6 +80,8 @@ flowchart LR
 cd web
 npm install
 npm run dev        # http://localhost:5173
+npm run format     # Prettier; CI перевіряє через npm run format:check
+npm run lint       # oxlint
 ```
 
 За замовчуванням фронтенд працює з **мок-API** прямо в браузері, тож бекенд не потрібен. Щоб підключити справжній API, створіть `web/.env.development.local` з `VITE_USE_MOCKS=false` і запустіть бекенд: Vite проксіює `/api` на `http://localhost:5131`.

@@ -25,7 +25,11 @@ export function YourMove({ groups, now }: { groups: GroupSummaryDto[]; now: numb
           const deadline = deadlineOf(g)
           return (
             <li key={g.id}>
-              <Link to={`/groups/${g.id}`} className="move-card" style={{ '--group': STAGE_COLOR[stageOf(g, now)] } as CSSProperties}>
+              <Link
+                to={`/groups/${g.id}`}
+                className="move-card"
+                style={{ '--group': STAGE_COLOR[stageOf(g, now)] } as CSSProperties}
+              >
                 <span className="move-icon" aria-hidden="true">
                   {voting ? <Vote size={20} /> : <CalendarClock size={20} />}
                 </span>

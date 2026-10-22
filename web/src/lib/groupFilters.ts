@@ -60,8 +60,7 @@ function matchesQuery(g: GroupSummaryDto, query: string): boolean {
 
 export function filterBase(groups: GroupSummaryDto[], f: Pick<GroupFilters, 'role' | 'query'>): GroupSummaryDto[] {
   return groups.filter(
-    (g) =>
-      (f.role === 'any' || (f.role === 'organizer') === (g.myRole === 'ORGANIZER')) && matchesQuery(g, f.query),
+    (g) => (f.role === 'any' || (f.role === 'organizer') === (g.myRole === 'ORGANIZER')) && matchesQuery(g, f.query),
   )
 }
 

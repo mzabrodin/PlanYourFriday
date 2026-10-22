@@ -11,8 +11,7 @@ import './index.css'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: (failureCount, error) =>
-        !(error instanceof ApiError && error.status < 500) && failureCount < 1,
+      retry: (failureCount, error) => !(error instanceof ApiError && error.status < 500) && failureCount < 1,
       refetchOnWindowFocus: false,
     },
   },

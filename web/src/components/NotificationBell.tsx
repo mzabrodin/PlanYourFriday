@@ -23,8 +23,16 @@ const KINDS: Record<NotificationKind, { Icon: LucideIcon; tone: string; text: (n
   INVITED: { Icon: Mail, tone: 'info', text: (n) => `${n.actorName} invited you to ${n.groupTitle}` },
   MEMBER_JOINED: { Icon: UserPlus, tone: 'info', text: (n) => `${n.actorName} joined ${n.groupTitle}` },
   VOTING_STARTED: { Icon: Vote, tone: 'vote', text: (n) => `${n.actorName} started a vote in ${n.groupTitle}` },
-  DEADLINE_SOON: { Icon: Hourglass, tone: 'warn', text: (n) => `Mark your free time for ${n.groupTitle} before the deadline` },
-  EVENT_CONFIRMED: { Icon: CalendarCheck, tone: 'ok', text: (n) => `${n.groupTitle} is on! ${n.actorName} confirmed the time` },
+  DEADLINE_SOON: {
+    Icon: Hourglass,
+    tone: 'warn',
+    text: (n) => `Mark your free time for ${n.groupTitle} before the deadline`,
+  },
+  EVENT_CONFIRMED: {
+    Icon: CalendarCheck,
+    tone: 'ok',
+    text: (n) => `${n.groupTitle} is on! ${n.actorName} confirmed the time`,
+  },
   EVENT_UPDATED: { Icon: Pencil, tone: 'info', text: (n) => `${n.actorName} updated the details of ${n.groupTitle}` },
   EVENT_CANCELLED: { Icon: CalendarX, tone: 'danger', text: (n) => `${n.actorName} cancelled ${n.groupTitle}` },
   FRIEND_REQUEST: { Icon: UserPlus, tone: 'info', text: (n) => `${n.actorName} wants to be your friend` },
@@ -106,7 +114,11 @@ export function NotificationBell() {
                 const { Icon, tone, text } = KINDS[n.kind]
                 return (
                   <li key={n.id}>
-                    <button type="button" className={`bell-item${n.read ? '' : ' unread'}`} onClick={() => openNotification(n)}>
+                    <button
+                      type="button"
+                      className={`bell-item${n.read ? '' : ' unread'}`}
+                      onClick={() => openNotification(n)}
+                    >
                       <span className={`bell-icon tone-${tone}`} aria-hidden="true">
                         <Icon size={16} />
                       </span>

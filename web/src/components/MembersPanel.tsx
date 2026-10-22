@@ -17,7 +17,9 @@ export function MembersPanel({ group }: { group: GroupDto }) {
   const showReadiness = group.status === 'PLANNING' || group.status === 'VOTING'
 
   return (
-    <Card title={showReadiness ? `Members · ${ready}/${group.members.length} ready` : `Members · ${group.members.length}`}>
+    <Card
+      title={showReadiness ? `Members · ${ready}/${group.members.length} ready` : `Members · ${group.members.length}`}
+    >
       <ul className="member-list">
         {group.members.map((m) => (
           <li key={m.userId}>
@@ -120,7 +122,14 @@ function InviteByEmail({ groupId }: { groupId: string }) {
 
   function submit(e: FormEvent) {
     e.preventDefault()
-    const emails = [...new Set(value.split(/[\s,;]+/).map((s) => s.trim().toLowerCase()).filter(Boolean))]
+    const emails = [
+      ...new Set(
+        value
+          .split(/[\s,;]+/)
+          .map((s) => s.trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    ]
     const bad = emails.filter((s) => !EMAIL_RE.test(s))
     setInvalid(bad)
     if (bad.length || emails.length === 0) return

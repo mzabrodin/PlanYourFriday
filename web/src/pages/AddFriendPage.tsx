@@ -41,7 +41,12 @@ export function AddFriendPage() {
         ) : (
           <>
             <p className="muted">wants to plan Fridays with you.</p>
-            <button type="button" className="btn btn-primary btn-big" disabled={add.isPending} onClick={() => add.mutate(code)}>
+            <button
+              type="button"
+              className="btn btn-primary btn-big"
+              disabled={add.isPending}
+              onClick={() => add.mutate(code)}
+            >
               <UserPlus size={18} aria-hidden="true" /> {add.isPending ? 'Adding…' : 'Add friend'}
             </button>
           </>

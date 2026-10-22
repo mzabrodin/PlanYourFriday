@@ -44,9 +44,7 @@ export function GroupCard({ group: g, now }: { group: GroupSummaryDto; now: numb
           </p>
         )}
 
-        {voting && (
-          <p className="vote-hint">{g.myVotePending ? 'Vote on a time' : 'Voting in progress · you voted'}</p>
-        )}
+        {voting && <p className="vote-hint">{g.myVotePending ? 'Vote on a time' : 'Voting in progress · you voted'}</p>}
         {planning && (
           <div className="readiness" aria-label={`${g.readyCount} of ${g.memberCount} marked free time`}>
             <div className="readiness-bar">

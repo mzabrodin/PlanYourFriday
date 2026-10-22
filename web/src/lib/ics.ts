@@ -1,7 +1,11 @@
 import type { EventDto } from '../api/types'
 
 const stamp = (iso: string) => iso.replace(/[-:]/g, '').replace(/\.\d{3}/, '')
-const escape = (text: string) => text.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/[,;]/g, (c) => `\\${c}`)
+const escape = (text: string) =>
+  text
+    .replace(/\\/g, '\\\\')
+    .replace(/\n/g, '\\n')
+    .replace(/[,;]/g, (c) => `\\${c}`)
 
 export function eventToIcs(event: EventDto): string {
   const description = [event.description, event.meetingLink].filter(Boolean).join('\n\n')

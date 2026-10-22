@@ -101,6 +101,14 @@ public sealed class Group : Entity
         return _members.Any(m => m.UserId == userId);
     }
 
+    public void EnsureOrganizer(Guid userId)
+    {
+        if (!IsOrganizer(userId))
+        {
+            throw new AccessDeniedException("group.not_organizer", "Only the organizer can do this.");
+        }
+    }
+
     public void MarkEventReminderSent(Guid userId, Guid eventId)
     {
         var member = _members.FirstOrDefault(m => m.UserId == userId)

@@ -36,9 +36,11 @@ flowchart LR
 | **Групи** | Усі групи з пошуком, фільтрами за етапом і роллю, сортуванням |
 | **Сторінка групи** | Календар вільного часу, найкращі варіанти, голосування, деталі події, учасники й запрошення |
 | **Календар** | Усі плани з усіх груп: місяць, тиждень, список |
-| **Сповіщення** | Запрошення, старт голосування, дедлайни, підтвердження, зміни та скасування |
+| **Ідеї** | Опитування серед друзів «що робимо?»: варіанти, голосування, переможець одразу стає групою. Нічия — крутимо колесо |
+| **Друзі** | Додавання за посиланням, пошук за @ніком, підказки з людей, з якими вже щось планували. Друзів можна одразу додати в групу чи опитування |
+| **Сповіщення** | Запрошення, старт голосування, дедлайни, підтвердження, зміни та скасування, заявки в друзі, опитування. Важливі ще й на email — за налаштуваннями |
 | **Wheel** | Колесо ідей, якщо не знаєте, чим зайнятися. Результат одразу перетворюється на план |
-| **Налаштування** | Профіль, підключення Google Calendar, звичний вільний час, email-сповіщення, тема, формат часу, експорт і видалення акаунта |
+| **Налаштування** | Профіль і @нік, підключення Google Calendar, звичний вільний час, email-сповіщення, тема, формат часу, експорт і видалення акаунта |
 
 **Кольори означають етап**, однаково по всьому сайту:
 
@@ -56,7 +58,7 @@ flowchart LR
 
 - **SPA** (`web/`): інтерфейс.
 - **API App** (`src/PlanYourFriday.Api`): HTTP-запити, вхід через Google, бізнес-логіка груп, доступності й подій.
-- **Worker App** (`src/PlanYourFriday.Worker`): фонова обробка outbox — листи й синхронізація з Google Calendar. Збій SMTP чи Google API не ламає запит користувача.
+- **Worker App** (`src/PlanYourFriday.Worker`): фонова робота — листи з outbox, синхронізація підтверджених подій у Google Calendar кожного учасника, нагадування про дедлайни й події, підсумки опитувань. Збій SMTP чи Google API не ламає запит користувача.
 - **PostgreSQL**: дані, включно з таблицею outbox.
 
 Шари бекенду: `Api` / `Worker` → `Application` (бізнес-правила й інтерфейси) → `Domain` (сутності), а `Infrastructure` реалізує інтерфейси (БД, Google, SMTP).
@@ -82,12 +84,32 @@ npm run dev        # http://localhost:5173
 
 За замовчуванням фронтенд працює з **мок-API** прямо в браузері, тож бекенд не потрібен. Щоб підключити справжній API, створіть `web/.env.development.local` з `VITE_USE_MOCKS=false` і запустіть бекенд: Vite проксіює `/api` на `http://localhost:5131`.
 
-**Backend** (потрібен .NET 10 SDK):
+**Backend** (потрібні .NET 10 SDK і Docker):
 
 ```bash
-dotnet run --project src/PlanYourFriday.Api
-dotnet run --project src/PlanYourFriday.Worker
+cp .env.example .env                              # лише перший раз
+docker compose up -d                              # PostgreSQL і Mailpit
+dotnet run --project src/PlanYourFriday.Api       # http://localhost:5131, міграції застосовуються самі
+dotnet run --project src/PlanYourFriday.Worker    # листи, Google Calendar, нагадування
 ```
+
+Листи з локального запуску не йдуть назовні, а потрапляють у Mailpit: http://localhost:8025.
+
+**Без ключів Google** у режимі розробки замість Google відкривається форма тестового входу: вводиш будь-який email і заходиш. Так зручно перевіряти кількома «друзями» в різних браузерах.
+
+Для входу через Google створіть OAuth Client ID (тип Web application) у Google Cloud Console з двома redirect URI:
+
+- `http://localhost:5173/api/auth/signin-google` (вхід);
+- `http://localhost:5173/api/calendar-connections/google/callback` (підключення календаря).
+
+Увімкніть **Google Calendar API** (APIs & Services → Library), а в OAuth consent screen → Data Access додайте scopes `.../auth/calendar.readonly` і `.../auth/calendar.events`. Ключі збережіть у user-secrets (не в git); API і Worker мають спільний `UserSecretsId`, тож достатньо одного разу:
+
+```bash
+dotnet user-secrets set "Authentication:Google:ClientId" "<client-id>" --project src/PlanYourFriday.Api
+dotnet user-secrets set "Authentication:Google:ClientSecret" "<client-secret>" --project src/PlanYourFriday.Api
+```
+
+**Тести:** `dotnet test`. Інтеграційні тести (`tests/PlanYourFriday.IntegrationTests`) самі піднімають PostgreSQL у Docker, тож Docker має бути запущений. Вони звіряють кожну відповідь API з типами SPA у `web/src/api/types.ts`, тому якщо фронтенд і бекенд розійдуться, тест це покаже.
 
 ## Структура
 
@@ -101,7 +123,8 @@ PlanYourFriday/
 │   ├── PlanYourFriday.Domain/        доменні сутності
 │   └── PlanYourFriday.Infrastructure/ БД, Google, SMTP
 └── tests/
-    └── PlanYourFriday.UnitTests/
+    ├── PlanYourFriday.UnitTests/         домен і сервіси (NSubstitute)
+    └── PlanYourFriday.IntegrationTests/  API + PostgreSQL у Docker, контракт із SPA
 ```
 
 ## Команда

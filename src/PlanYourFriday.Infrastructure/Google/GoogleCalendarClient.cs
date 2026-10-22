@@ -16,6 +16,7 @@ namespace PlanYourFriday.Infrastructure.Google;
 internal sealed class GoogleCalendarClient(GoogleCalendar calendar) : IExternalCalendarClient
 {
     private const string DefaultColor = "#4285f4";
+    private const string PrimaryCalendarId = "primary";
 
     public async Task<IReadOnlyList<ExternalCalendar>> ListCalendarsAsync(
         string accessToken,
@@ -28,7 +29,7 @@ internal sealed class GoogleCalendarClient(GoogleCalendar calendar) : IExternalC
         return
         [
             .. (list.Items ?? []).Select(c => new ExternalCalendar(
-                c.Id,
+                c.Primary == true ? PrimaryCalendarId : c.Id,
                 c.SummaryOverride ?? c.Summary ?? c.Id,
                 c.BackgroundColor ?? DefaultColor,
                 c.Primary ?? false)),

@@ -100,6 +100,22 @@ public sealed class GoogleClientsTests : IDisposable
     }
 
     [Fact]
+    public async Task ListCalendars_ExposesThePrimaryCalendarAsPrimary()
+    {
+        _google.Reply(HttpStatusCode.OK, """
+            {"items":[
+              {"id":"max@gmail.com","summary":"max@gmail.com","primary":true},
+              {"id":"team@group.calendar.google.com","summaryOverride":"Team","backgroundColor":"#123456"}]}
+            """);
+
+        var calendars = await _client.ListCalendarsAsync("token-1", CancellationToken.None);
+
+        Assert.Equal(
+            [new ExternalCalendar("primary", "max@gmail.com", "#4285f4", true), new ExternalCalendar("team@group.calendar.google.com", "Team", "#123456", false)],
+            calendars);
+    }
+
+    [Fact]
     public async Task RejectedAccessToken_AsksTheUserToReconnect()
     {
         _google.Reply(HttpStatusCode.Unauthorized);

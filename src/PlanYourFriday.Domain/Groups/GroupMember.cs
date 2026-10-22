@@ -25,6 +25,13 @@ public sealed class GroupMember : AuditableEntity
 
     public IReadOnlyCollection<AvailabilitySlot> Availability => _availability;
 
+    public Guid? RemindedEventId { get; private set; }
+
+    internal void MarkEventReminderSent(Guid eventId)
+    {
+        RemindedEventId = eventId;
+    }
+
     internal void SetAvailability(IEnumerable<TimeRange> slots)
     {
         _availability.Clear();

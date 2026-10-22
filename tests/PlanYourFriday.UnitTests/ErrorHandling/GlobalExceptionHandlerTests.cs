@@ -46,9 +46,8 @@ public class GlobalExceptionHandlerTests
 
         Assert.Equal("Conflict", body.GetProperty("title").GetString());
         Assert.Equal("POST /api/groups", body.GetProperty("instance").GetString());
-        Assert.False(string.IsNullOrEmpty(body.GetProperty("trace_id").GetString()));
+        Assert.False(string.IsNullOrEmpty(body.GetProperty("traceId").GetString()));
         Assert.False(body.TryGetProperty("type", out _));
-        Assert.False(body.TryGetProperty("traceId", out _));
     }
 
     [Fact]

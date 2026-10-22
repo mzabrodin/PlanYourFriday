@@ -94,14 +94,14 @@ public class GroupTests
     {
         var group = CreateGroup();
         group.AddMember(Participant);
-        group.ScheduleEvent(Range(3, 18, 21), null, null, Now);
+        group.ScheduleEvent("Event", null, Range(3, 18, 21), null, null, Now);
 
         Action[] operations =
         [
             () => group.AddMember(Guid.NewGuid()),
             () => group.RemoveMember(Participant),
             () => group.Invite("friend@example.com"),
-            () => group.ScheduleEvent(Range(4, 18, 21), null, null, Now),
+            () => group.ScheduleEvent("Event", null, Range(4, 18, 21), null, null, Now),
         ];
 
         Assert.All(operations, operation =>
@@ -119,6 +119,18 @@ public class GroupTests
 
         Assert.False(group.IsMember(Participant));
         Assert.Single(group.Members);
+    }
+
+    [Fact]
+    public void EnsureOrganizer_AllowsOnlyOrganizer()
+    {
+        var group = CreateGroup();
+        group.AddMember(Participant);
+
+        group.EnsureOrganizer(Organizer);
+        var exception = Assert.Throws<AccessDeniedException>(() => group.EnsureOrganizer(Participant));
+
+        Assert.Equal("group.not_organizer", exception.Code);
     }
 
     [Fact]
@@ -249,12 +261,13 @@ public class GroupTests
     {
         var group = CreateGroup();
 
-        var @event = group.ScheduleEvent(Range(3, 18, 21), "Pub", null, Now);
+        var @event = group.ScheduleEvent("Pub night", "Bring cash", Range(3, 18, 21), "Pub", null, Now);
 
         Assert.Equal(GroupStatus.Scheduled, group.Status);
         Assert.Equal(group.Id, @event.GroupId);
         Assert.Equal(Organizer, @event.OwnerId);
-        Assert.Equal(group.Title, @event.Title);
+        Assert.Equal("Pub night", @event.Title);
+        Assert.Equal("Bring cash", @event.Description);
         Assert.Equal("Pub", @event.Location);
         Assert.Equal(EventStatus.Confirmed, @event.Status);
     }
@@ -264,7 +277,7 @@ public class GroupTests
     {
         var group = CreateGroup();
 
-        var exception = Assert.Throws<BusinessRuleViolationException>(() => group.ScheduleEvent(Range(3, 18, 19), null, null, Now));
+        var exception = Assert.Throws<BusinessRuleViolationException>(() => group.ScheduleEvent("Event", null, Range(3, 18, 19), null, null, Now));
         Assert.Equal("event.too_short", exception.Code);
     }
 
@@ -273,7 +286,7 @@ public class GroupTests
     {
         var group = CreateGroup();
 
-        var exception = Assert.Throws<BusinessRuleViolationException>(() => group.ScheduleEvent(Range(7, 18, 21), null, null, Now));
+        var exception = Assert.Throws<BusinessRuleViolationException>(() => group.ScheduleEvent("Event", null, Range(7, 18, 21), null, null, Now));
         Assert.Equal("event.outside_window", exception.Code);
     }
 
@@ -282,7 +295,7 @@ public class GroupTests
     {
         var group = CreateGroup();
 
-        var exception = Assert.Throws<BusinessRuleViolationException>(() => group.ScheduleEvent(Range(3, 18, 21), null, null, At(3, 19)));
+        var exception = Assert.Throws<BusinessRuleViolationException>(() => group.ScheduleEvent("Event", null, Range(3, 18, 21), null, null, At(3, 19)));
         Assert.Equal("event.start_in_past", exception.Code);
     }
 
@@ -290,17 +303,17 @@ public class GroupTests
     public void Cancel_RejectsScheduledGroup()
     {
         var group = CreateGroup();
-        group.ScheduleEvent(Range(3, 18, 21), null, null, Now);
+        group.ScheduleEvent("Event", null, Range(3, 18, 21), null, null, Now);
 
         var exception = Assert.Throws<InvalidStateException>(group.Cancel);
         Assert.Equal("group.cancel_scheduled_event_instead", exception.Code);
     }
 
     [Fact]
-    public void CancelEvent_CancelsEventAndGroupAndQueuesCalendarResync()
+    public void CancelEvent_CancelsEventReopensPlanningAndQueuesCalendarResync()
     {
         var group = CreateGroup();
-        var @event = group.ScheduleEvent(Range(3, 18, 21), null, null, Now);
+        var @event = group.ScheduleEvent("Event", null, Range(3, 18, 21), null, null, Now);
         var connectionId = Guid.NewGuid();
         var link = @event.AddCalendarLink(connectionId);
         @event.MarkSynced(connectionId, "google-event-id");
@@ -308,7 +321,7 @@ public class GroupTests
         group.CancelEvent(@event);
 
         Assert.Equal(EventStatus.Cancelled, @event.Status);
-        Assert.Equal(GroupStatus.Cancelled, group.Status);
+        Assert.Equal(GroupStatus.Planning, group.Status);
         Assert.Equal(SyncStatus.Pending, link.SyncStatus);
         Assert.Equal("google-event-id", link.ExternalEventId);
     }
@@ -316,7 +329,7 @@ public class GroupTests
     [Fact]
     public void MarkSynced_StoresExternalEventId()
     {
-        var @event = CreateGroup().ScheduleEvent(Range(3, 18, 21), null, null, Now);
+        var @event = CreateGroup().ScheduleEvent("Event", null, Range(3, 18, 21), null, null, Now);
         var connectionId = Guid.NewGuid();
         var link = @event.AddCalendarLink(connectionId);
 
@@ -327,9 +340,25 @@ public class GroupTests
     }
 
     [Fact]
+    public void MarkRemovedFromCalendar_ClearsExternalEventIdOfCancelledEvent()
+    {
+        var group = CreateGroup();
+        var @event = group.ScheduleEvent("Event", null, Range(3, 18, 21), null, null, Now);
+        var connectionId = Guid.NewGuid();
+        var link = @event.AddCalendarLink(connectionId);
+        @event.MarkSynced(connectionId, "google-event-id");
+        group.CancelEvent(@event);
+
+        @event.MarkRemovedFromCalendar(connectionId);
+
+        Assert.Equal(SyncStatus.Synced, link.SyncStatus);
+        Assert.Null(link.ExternalEventId);
+    }
+
+    [Fact]
     public void MarkSynced_RejectsUnknownConnection()
     {
-        var @event = CreateGroup().ScheduleEvent(Range(3, 18, 21), null, null, Now);
+        var @event = CreateGroup().ScheduleEvent("Event", null, Range(3, 18, 21), null, null, Now);
 
         var exception = Assert.Throws<EntityNotFoundException>(() => @event.MarkSynced(Guid.NewGuid(), "google-event-id"));
         Assert.Equal("calendar_link.not_found", exception.Code);
@@ -339,7 +368,7 @@ public class GroupTests
     public void CancelEvent_RejectsEventOfAnotherGroup()
     {
         var group = CreateGroup();
-        var otherEvent = CreateGroup().ScheduleEvent(Range(3, 18, 21), null, null, Now);
+        var otherEvent = CreateGroup().ScheduleEvent("Event", null, Range(3, 18, 21), null, null, Now);
 
         Assert.Throws<ArgumentException>(() => group.CancelEvent(otherEvent));
     }

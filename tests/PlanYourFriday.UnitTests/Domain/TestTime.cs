@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Time.Testing;
+
 using PlanYourFriday.Domain.Common;
 
 namespace PlanYourFriday.UnitTests.Domain;
@@ -7,6 +9,11 @@ internal static class TestTime
     public static DateTime At(int day, int hour)
     {
         return new DateTime(2026, 11, day, hour, 0, 0, DateTimeKind.Utc);
+    }
+
+    public static FakeTimeProvider Clock(int day, int hour)
+    {
+        return new FakeTimeProvider(new DateTimeOffset(At(day, hour)));
     }
 
     public static TimeRange Range(int day, int startHour, int endHour)

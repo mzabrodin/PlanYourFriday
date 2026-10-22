@@ -81,7 +81,7 @@ public class InvitationTests
     public void AcceptInvitation_RejectsScheduledGroup()
     {
         var (group, invitation) = CreateInvitation();
-        group.ScheduleEvent(Range(2, 18, 21), null, null, Now);
+        group.ScheduleEvent("Event", null, Range(2, 18, 21), null, null, Now);
 
         var exception = Assert.Throws<InvalidStateException>(() => group.AcceptInvitation(invitation.Id, Guid.NewGuid()));
         Assert.Equal("group.not_planning", exception.Code);

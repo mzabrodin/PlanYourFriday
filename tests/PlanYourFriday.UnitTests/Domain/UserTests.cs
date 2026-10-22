@@ -15,7 +15,7 @@ public class UserTests
     private static CalendarConnection Connect(User user, string account, string accessToken = "access")
     {
         return user.ConnectCalendar(
-            CalendarProvider.Google, account, "primary", accessToken, "refresh", At(1, 12), ["calendar"]);
+            CalendarProvider.Google, account, $"{account}@example.com", "primary", accessToken, "refresh", At(1, 12), ["calendar"]);
     }
 
     [Fact]
@@ -39,6 +39,17 @@ public class UserTests
 
         Assert.Same(user.Identities.First(), existing);
         Assert.Equal(2, user.Identities.Count);
+    }
+
+    [Fact]
+    public void EndAllSessions_ChangesSessionVersion()
+    {
+        var user = CreateUser();
+        var before = user.SessionVersion;
+
+        user.EndAllSessions();
+
+        Assert.NotEqual(before, user.SessionVersion);
     }
 
     [Fact]

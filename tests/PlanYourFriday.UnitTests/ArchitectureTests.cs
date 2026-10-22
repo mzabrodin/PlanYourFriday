@@ -22,6 +22,14 @@ public class ArchitectureTests
         Assert.DoesNotContain(outerLayer, ProjectReferences(typeof(OutboxMessage).Assembly));
     }
 
+    [Fact]
+    public void Application_DoesNotDependOnEntityFramework()
+    {
+        Assert.DoesNotContain(
+            typeof(OutboxMessage).Assembly.GetReferencedAssemblies(),
+            a => a.Name!.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.Ordinal));
+    }
+
     private static string[] ProjectReferences(Assembly assembly)
     {
         return

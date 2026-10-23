@@ -71,9 +71,9 @@ export function CreateGroupPage() {
   return (
     <div className="narrow stack">
       <Link to="/groups" className="back icon-line">
-        <ArrowLeft size={16} aria-hidden="true" /> My groups
+        <ArrowLeft size={16} aria-hidden="true" /> My events
       </Link>
-      <h1>New group</h1>
+      <h1>New event</h1>
       {poll.data && <p className="notice">From the poll "{poll.data.title}". Friends who voted are already added.</p>}
 
       <form className="card form" onSubmit={submit}>
@@ -157,7 +157,7 @@ export function CreateGroupPage() {
             </>
           ) : (
             <p className="hint">
-              No friends yet. <Link to="/friends">Add friends</Link> or share the invite link after creating the group.
+              No friends yet. <Link to="/friends">Add friends</Link> or share the invite link after creating the event.
             </p>
           )}
         </fieldset>
@@ -170,7 +170,7 @@ export function CreateGroupPage() {
             Cancel
           </Link>
           <button type="submit" className="btn btn-primary" disabled={create.isPending}>
-            {create.isPending ? 'Creating…' : 'Create group'}
+            {create.isPending ? 'Creating…' : 'Create event'}
           </button>
         </div>
       </form>

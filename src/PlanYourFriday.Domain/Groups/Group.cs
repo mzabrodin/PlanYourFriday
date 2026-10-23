@@ -135,7 +135,7 @@ public sealed class Group : Entity
     {
         if (IsOrganizer(userId))
         {
-            throw new InvalidStateException("group.organizer_cannot_leave", "The organizer cannot leave the group.");
+            throw new InvalidStateException("group.organizer_cannot_leave", "The organizer cannot leave the event.");
         }
 
         var member = _members.FirstOrDefault(m => m.UserId == userId);
@@ -160,11 +160,11 @@ public sealed class Group : Entity
     public void SetAvailability(Guid userId, IEnumerable<TimeRange> slots, DateTime now)
     {
         var member = _members.FirstOrDefault(m => m.UserId == userId)
-            ?? throw new AccessDeniedException("group.not_a_member", "Only group members can set availability.");
+            ?? throw new AccessDeniedException("group.not_a_member", "Only members can mark free time.");
 
         if (!CanEditAvailability(now))
         {
-            throw new InvalidStateException("group.availability_closed", "Availability can no longer be edited for this group.");
+            throw new InvalidStateException("group.availability_closed", "Free time can no longer be changed for this event.");
         }
 
         var sorted = slots.OrderBy(s => s.Start).ToList();
@@ -271,7 +271,7 @@ public sealed class Group : Entity
         string? meetingLink,
         DateTime now)
     {
-        EnsurePlanning("schedule an event for");
+        EnsurePlanning("confirm a time for");
 
         if (time.Start <= now)
         {
@@ -285,7 +285,7 @@ public sealed class Group : Entity
 
         if (time.Duration < EventDuration)
         {
-            throw new BusinessRuleViolationException("event.too_short", "Event must be at least as long as the group's event duration.");
+            throw new BusinessRuleViolationException("event.too_short", "The event must be at least as long as the planned duration.");
         }
 
         EndVoting();
@@ -325,7 +325,7 @@ public sealed class Group : Entity
     {
         if (Status != GroupStatus.Planning)
         {
-            throw new InvalidStateException("group.not_planning", $"Cannot start voting in a group that is {Status}.");
+            throw new InvalidStateException("group.not_planning", $"Voting cannot start for an event that is {Status.ToString().ToLowerInvariant()}.");
         }
 
         var times = options.Distinct().OrderBy(t => t.Start).ToList();
@@ -361,7 +361,7 @@ public sealed class Group : Entity
     {
         if (!IsMember(userId))
         {
-            throw new AccessDeniedException("group.not_a_member", "Only group members can vote.");
+            throw new AccessDeniedException("group.not_a_member", "Only members can vote.");
         }
 
         if (Status != GroupStatus.Voting)
@@ -406,7 +406,7 @@ public sealed class Group : Entity
     {
         if (Status is not (GroupStatus.Planning or GroupStatus.Voting))
         {
-            throw new InvalidStateException("group.not_planning", $"Cannot {action} a group that is {Status}.");
+            throw new InvalidStateException("group.not_planning", $"Cannot {action} an event that is {Status.ToString().ToLowerInvariant()}.");
         }
     }
 

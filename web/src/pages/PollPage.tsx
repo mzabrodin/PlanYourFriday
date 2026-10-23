@@ -222,7 +222,7 @@ function Result({ poll, winners }: { poll: PollDto; winners: string[] }) {
 
       {poll.groupId ? (
         <Link to={`/groups/${poll.groupId}`} className="btn btn-on-dark">
-          Go to group <ArrowRight size={16} aria-hidden="true" />
+          Go to event <ArrowRight size={16} aria-hidden="true" />
         </Link>
       ) : tie ? (
         <div className="poll-result-actions">
@@ -240,7 +240,7 @@ function Result({ poll, winners }: { poll: PollDto; winners: string[] }) {
         </div>
       ) : (
         <Link to={groupLink(winners[0])} className="btn btn-on-dark">
-          Create a group with this <ArrowRight size={16} aria-hidden="true" />
+          Plan an event with this <ArrowRight size={16} aria-hidden="true" />
         </Link>
       )}
     </section>

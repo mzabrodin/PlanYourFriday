@@ -80,7 +80,7 @@ function AddFriends({ group }: { group: GroupDto }) {
             onClick={() => add.mutate(selected, { onSuccess: () => setSelected([]) })}
           >
             <UserPlus size={16} aria-hidden="true" />
-            {add.isPending ? 'Adding…' : selected.length > 1 ? `Add ${selected.length} friends` : 'Add to group'}
+            {add.isPending ? 'Adding…' : selected.length > 1 ? `Add ${selected.length} friends` : 'Add to event'}
           </button>
         </>
       )}

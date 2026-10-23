@@ -9,7 +9,7 @@ public static class GroupAccess
     {
         if (group is null || !group.IsMember(userId))
         {
-            throw new EntityNotFoundException("group.not_found", "Group not found.");
+            throw new EntityNotFoundException("group.not_found", "Event not found.");
         }
 
         return group;

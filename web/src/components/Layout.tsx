@@ -48,7 +48,7 @@ export function Layout() {
           {me && (
             <nav className="tabs" aria-label="Main">
               <NavLink to="/groups" end>
-                Groups
+                Events
               </NavLink>
               <NavLink to="/ideas">
                 Ideas

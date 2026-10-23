@@ -19,14 +19,14 @@ const STEPS = [
   {
     stage: 'voting',
     icon: Vote,
-    title: 'The group votes on the best slots',
+    title: 'Friends vote on the best slots',
     text: 'Up to six top options, even when there is no perfect match.',
   },
   {
     stage: 'scheduled',
     icon: CalendarCheck,
     title: 'It lands in every calendar',
-    text: 'Confirm the time and the event shows up for the whole group.',
+    text: 'Confirm the time and the event shows up for everyone.',
   },
 ] as const
 
@@ -57,10 +57,10 @@ export function LoginPage() {
             Find a time that works <em>for everyone</em>
           </h1>
           <p className="lead">
-            Create a group, invite friends, mark when you're free, and PlanYourFriday picks the slot where everyone can
+            Create an event, invite friends, mark when you're free, and PlanYourFriday picks the slot where everyone can
             make it. The event lands straight in your Google Calendar.
           </p>
-          {joining && <p className="notice">Sign in to join the group you were invited to.</p>}
+          {joining && <p className="notice">Sign in to join the event you were invited to.</p>}
           <div className="landing-cta">
             <button type="button" className="btn btn-primary btn-google" onClick={() => api.startLogin(returnTo)}>
               <span className="google-mark">

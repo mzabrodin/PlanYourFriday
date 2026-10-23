@@ -35,7 +35,7 @@ public sealed class GroupService(
     public async Task<GroupView> GetAsync(Guid groupId, CancellationToken cancellationToken)
     {
         return await queries.GetAsync(groupId, currentUser.UserId, cancellationToken)
-            ?? throw new EntityNotFoundException("group.not_found", "Group not found.");
+            ?? throw new EntityNotFoundException("group.not_found", "Event not found.");
     }
 
     public async Task<GroupView> CreateAsync(GroupDraft draft, CancellationToken cancellationToken)

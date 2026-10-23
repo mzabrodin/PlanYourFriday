@@ -67,7 +67,7 @@ export function GroupsBrowser({ groups, now }: { groups: GroupSummaryDto[]; now:
           type="search"
           className="search"
           placeholder="Search by name, organizer or place…"
-          aria-label="Search groups"
+          aria-label="Search events"
           value={search}
           onChange={(e) => {
             setSearch(e.target.value)
@@ -86,7 +86,7 @@ export function GroupsBrowser({ groups, now }: { groups: GroupSummaryDto[]; now:
         </select>
       </div>
 
-      <div className="view-tabs" role="tablist" aria-label="Show groups">
+      <div className="view-tabs" role="tablist" aria-label="Show events">
         {GROUP_VIEWS.map(({ value, label }) => {
           const count = base.filter((g) => matchesView(g, value, now)).length
           return (
@@ -106,7 +106,7 @@ export function GroupsBrowser({ groups, now }: { groups: GroupSummaryDto[]; now:
 
       {visible.length === 0 ? (
         <div className="empty">
-          <p>No groups match these filters.</p>
+          <p>No events match these filters.</p>
           {!isDefault && (
             <button
               type="button"

@@ -93,7 +93,7 @@ export function CalendarPage() {
       <div className="page-header">
         <h1>My calendar</h1>
         <Link to="/groups/new" className="btn btn-primary">
-          <Plus size={18} aria-hidden="true" /> New group
+          <Plus size={18} aria-hidden="true" /> New event
         </Link>
       </div>
 
@@ -160,7 +160,7 @@ export function CalendarPage() {
               </header>
               <h2>{selected.kind === 'MY_FREE_TIME' ? `Free for ${selected.groupTitle}` : selected.title}</h2>
               <p className="event-when">{formatRange(selected.time)}</p>
-              {selected.kind === 'PLANNING' && <p className="muted small">Window the group is choosing a time in</p>}
+              {selected.kind === 'PLANNING' && <p className="muted small">Window friends are choosing a time in</p>}
               {selected.location && (
                 <p className="icon-line">
                   <MapPin size={16} aria-hidden="true" /> {selected.location}
@@ -173,7 +173,7 @@ export function CalendarPage() {
                 <strong>Who:</strong> {selected.people.join(', ')}
               </p>
               <button type="button" className="btn" onClick={() => navigate(`/groups/${selected.groupId}`)}>
-                Open group <ArrowRight size={16} aria-hidden="true" />
+                Open event <ArrowRight size={16} aria-hidden="true" />
               </button>
             </section>
           ) : (

@@ -54,7 +54,7 @@ export function GroupPage() {
   return (
     <div className="stack">
       <Link to="/groups" className="back icon-line">
-        <ArrowLeft size={16} aria-hidden="true" /> My groups
+        <ArrowLeft size={16} aria-hidden="true" /> My events
       </Link>
 
       <header className="group-header">
@@ -146,8 +146,8 @@ export function GroupPage() {
                 {g.status === 'PLANNING'
                   ? 'The availability deadline has passed.'
                   : g.status === 'VOTING'
-                    ? 'Free time is locked while the group votes. Highlighted: the times being voted on.'
-                    : 'Free time is closed for this group.'}
+                    ? 'Free time is locked while everyone votes. Highlighted: the times being voted on.'
+                    : 'Free time is closed for this event.'}
               </p>
             )}
 

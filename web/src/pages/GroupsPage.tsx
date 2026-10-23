@@ -12,9 +12,9 @@ export function GroupsPage() {
   return (
     <div className="stack">
       <div className="page-header">
-        <h1>My groups</h1>
+        <h1>My events</h1>
         <Link to="/groups/new" className="btn btn-primary">
-          <Plus size={18} aria-hidden="true" /> New group
+          <Plus size={18} aria-hidden="true" /> New event
         </Link>
       </div>
 
@@ -23,7 +23,7 @@ export function GroupsPage() {
 
       {groups?.length === 0 && (
         <div className="empty">
-          <p>You're not in any groups yet.</p>
+          <p>You don't have any events yet.</p>
           <p className="muted">Create one, or open an invite link a friend sent you.</p>
         </div>
       )}

@@ -196,7 +196,7 @@ public sealed class Poll : Entity
 
         if (GroupId is not null && GroupId != groupId)
         {
-            throw new InvalidStateException("poll.already_planned", "A group was already created from this poll.");
+            throw new InvalidStateException("poll.already_planned", "An event was already planned from this poll.");
         }
 
         GroupId = groupId;

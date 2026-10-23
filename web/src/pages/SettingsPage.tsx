@@ -212,7 +212,7 @@ function SettingsForm({
         </nav>
 
         <div className="settings-sections">
-          <SettingsSection id="profile" icon={User} title="Profile" description="How friends see you in groups.">
+          <SettingsSection id="profile" icon={User} title="Profile" description="How friends see you in events.">
             <div className="profile-head">
               <UserAvatar user={{ ...user, displayName: profile.displayName || user.displayName }} size={64} />
               <div>
@@ -224,7 +224,7 @@ function SettingsForm({
 
             <SettingRow
               title="Display name"
-              description="Shown on group pages, invites and calendar events."
+              description="Shown on event pages, invites and calendars."
               htmlFor="displayName"
             >
               <input
@@ -284,11 +284,11 @@ function SettingsForm({
             id="planning"
             icon={CalendarClock}
             title="Planning"
-            description="Shortcuts for creating groups and marking free time."
+            description="Shortcuts for creating events and marking free time."
           >
             <SettingRow
               title="Default event length"
-              description="Pre-selected when you create a new group."
+              description="Pre-selected when you create a new event."
               htmlFor="defaultDuration"
             >
               <select
@@ -307,7 +307,7 @@ function SettingsForm({
             <div className="setting-group">
               <p className="setting-title">My usual free time</p>
               <p className="setting-desc">
-                “Fill my usual hours” on a group's calendar adds these hours to every day of the planning window. You
+                “Fill my usual hours” on an event's calendar adds these hours to every day of the planning window. You
                 can still adjust them after.
               </p>
               <UsualHoursRow
@@ -333,7 +333,7 @@ function SettingsForm({
             title="Notifications"
             description={`You always get notifications in the app (the bell). Choose what we also email to ${user.email}.`}
           >
-            <SettingRow title="Invitations" description="When someone invites you to a group.">
+            <SettingRow title="Invitations" description="When someone invites you to an event.">
               <Switch
                 label="Invitations"
                 checked={prefs.notifications.invitations}
@@ -540,7 +540,7 @@ function CalendarSection({
       <SettingsSection id="calendar" icon={CalendarDays} title="Google Calendar">
         <div className="connect-empty">
           <p>
-            Connect Google Calendar to import your busy times into groups and to get confirmed events added to your
+            Connect Google Calendar to import your busy times into events and to get confirmed events added to your
             calendar automatically.
           </p>
           <p className="muted small">We only read when you're busy, never the details of your events.</p>
@@ -598,7 +598,7 @@ function CalendarSection({
 
       <div className="setting-group">
         <p className="setting-title">Check these calendars for busy time</p>
-        <p className="setting-desc">Used by “Import from Google Calendar” in groups.</p>
+        <p className="setting-desc">Used by “Import from Google Calendar” on events.</p>
         <ul className="calendar-checklist">
           {connection.calendars.map((c) => (
             <li key={c.id}>
@@ -670,7 +670,7 @@ function AccountSection({ email }: { email: string }) {
 
   return (
     <SettingsSection id="account" icon={ShieldCheck} title="Account">
-      <SettingRow title="Download my data" description="Your profile, settings, groups and free time as a JSON file.">
+      <SettingRow title="Download my data" description="Your profile, settings, events and free time as a JSON file.">
         <button type="button" className="btn" disabled={exporting} onClick={download}>
           {exporting ? 'Preparing…' : 'Download'}
         </button>
@@ -702,8 +702,8 @@ function AccountSection({ email }: { email: string }) {
           <div className="setting-text">
             <span className="setting-title">Delete account</span>
             <p className="setting-desc">
-              Removes your profile, free time and calendar connection, and takes you out of all groups. Groups you
-              organize are cancelled for everyone. This can't be undone.
+              Removes your profile, free time and calendar connection, and takes you out of all events. Events you
+              organize are deleted for everyone. This can't be undone.
             </p>
           </div>
           {!confirmOpen && (

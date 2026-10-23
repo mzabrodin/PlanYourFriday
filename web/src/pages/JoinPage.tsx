@@ -20,10 +20,10 @@ export function JoinPage() {
       <div className="narrow stack">
         <ErrorState error={error} />
         <Link to="/" className="btn">
-          Go to my groups
+          Go to my events
         </Link>
       </div>
     )
   }
-  return <Loading label="Joining the group…" />
+  return <Loading label="Joining the event…" />
 }

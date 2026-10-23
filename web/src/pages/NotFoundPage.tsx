@@ -5,7 +5,7 @@ export function NotFoundPage() {
     <div className="state">
       <h1>Page not found</h1>
       <Link to="/" className="btn">
-        Back to my groups
+        Back to my events
       </Link>
     </div>
   )

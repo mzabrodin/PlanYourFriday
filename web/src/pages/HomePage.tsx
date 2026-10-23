@@ -49,7 +49,7 @@ export function HomePage() {
 
       {groups?.length === 0 && (
         <div className="empty">
-          <p>You're not in any groups yet.</p>
+          <p>You don't have any events yet.</p>
           <p className="muted">Create one, or open an invite link a friend sent you.</p>
         </div>
       )}
@@ -57,7 +57,7 @@ export function HomePage() {
       {groups && groups.length > 0 && (
         <Link to="/groups" className="all-groups-link">
           <span>
-            <strong>All groups</strong>
+            <strong>All events</strong>
             <span className="muted small">
               {groups.length} {groups.length === 1 ? 'group' : 'groups'} · search, filter, past plans
             </span>

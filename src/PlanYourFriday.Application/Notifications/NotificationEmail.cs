@@ -54,7 +54,7 @@ public static class NotificationEmail
                 Heading = $"Last call for \u201c{groupTitle}\u201d",
                 Paragraphs =
                 [
-                    "The deadline to mark your free time is coming up. Add yours so the group picks a time that works for you too.",
+                    "The deadline to mark your free time is coming up. Add yours so the time that gets picked works for you too.",
                 ],
                 ActionLabel = "Mark my free time",
                 ActionUrl = link,

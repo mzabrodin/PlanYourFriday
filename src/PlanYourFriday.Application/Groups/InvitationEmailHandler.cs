@@ -43,7 +43,7 @@ public sealed class InvitationEmailHandler(
                 $"{organizerName} is planning \u201c{group.Title}\u201d on PlanYourFriday and wants you to join.",
                 "Mark when you're free and the app will find a time that works for everyone.",
             ],
-            ActionLabel = "Join the group",
+            ActionLabel = "Join the event",
             ActionUrl = link,
             Footer = $"You got this because {organizerName} invited {invitation.Email}. Don't know them? Just ignore this email.",
         });

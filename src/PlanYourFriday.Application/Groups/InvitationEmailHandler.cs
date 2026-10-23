@@ -32,18 +32,22 @@ public sealed class InvitationEmailHandler(
         var organizerName = organizer?.DisplayName ?? "A friend";
         var link = new Uri(options.Value.PublicUrl, $"/join/{Uri.EscapeDataString(group.InviteToken)}");
 
-        await email.SendAsync(
-            invitation.Email,
-            $"{organizerName} invited you to \"{group.Title}\"",
-            $"""
-            Hi!
-
-            {organizerName} is planning "{group.Title}" on Plan Your Friday and wants you to join.
-            Mark when you're free and the app will find a time that works for everyone:
-
-            {link}
-            """,
-            cancellationToken);
+        var message = EmailLayout.Render(new EmailContent
+        {
+            Subject = $"{organizerName} invited you to \"{group.Title}\"",
+            Tone = EmailTone.Planning,
+            Eyebrow = "You're invited",
+            Heading = $"{organizerName} invited you to \u201c{group.Title}\u201d",
+            Paragraphs =
+            [
+                $"{organizerName} is planning \u201c{group.Title}\u201d on PlanYourFriday and wants you to join.",
+                "Mark when you're free and the app will find a time that works for everyone.",
+            ],
+            ActionLabel = "Join the group",
+            ActionUrl = link,
+            Footer = $"You got this because {organizerName} invited {invitation.Email}. Don't know them? Just ignore this email.",
+        });
+        await email.SendAsync(invitation.Email, message, cancellationToken);
 
         group.MarkInvitationSent(invitation.Id);
     }

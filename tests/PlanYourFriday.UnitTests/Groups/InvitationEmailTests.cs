@@ -49,8 +49,9 @@ public class InvitationEmailTests
         await _email.Received(1)
             .SendAsync(
                 "friend@example.com",
-                Arg.Is<string>(s => s.Contains("Max invited you to \"Board games\"", StringComparison.Ordinal)),
-                Arg.Is<string>(b => b.Contains($"https://pyf.example/join/{_group.InviteToken}", StringComparison.Ordinal)),
+                Arg.Is<EmailMessage>(m => m.Subject.Contains("Max invited you to \"Board games\"", StringComparison.Ordinal)
+                    && m.Text.Contains($"https://pyf.example/join/{_group.InviteToken}", StringComparison.Ordinal)
+                    && m.Html.Contains($"https://pyf.example/join/{_group.InviteToken}", StringComparison.Ordinal)),
                 Arg.Any<CancellationToken>());
         Assert.Equal(InvitationStatus.Sent, _invitation.Status);
         Assert.NotNull(_message.ProcessedAt);
@@ -63,14 +64,14 @@ public class InvitationEmailTests
 
         await _dispatcher.DispatchDueAsync(CancellationToken.None);
 
-        await _email.DidNotReceiveWithAnyArgs().SendAsync(null!, null!, null!, CancellationToken.None);
+        await _email.DidNotReceiveWithAnyArgs().SendAsync(null!, null!, CancellationToken.None);
         Assert.NotNull(_message.ProcessedAt);
     }
 
     [Fact]
     public async Task Dispatch_SchedulesRetryWhenSendingFails()
     {
-        _email.SendAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        _email.SendAsync(Arg.Any<string>(), Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
             .Returns(_ => throw new InvalidOperationException("SMTP is down."));
 
         await _dispatcher.DispatchDueAsync(CancellationToken.None);

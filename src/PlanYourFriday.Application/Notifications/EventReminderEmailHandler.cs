@@ -31,6 +31,6 @@ public sealed class EventReminderEmailHandler(
 
         var link = new Uri(options.Value.PublicUrl, $"/groups/{@event.GroupId}");
         var message = NotificationEmail.ComposeReminder(@event, recipient.TimeZone, link);
-        await email.SendAsync(recipient.Email, message.Subject, message.Body, cancellationToken);
+        await email.SendAsync(recipient.Email, message, cancellationToken);
     }
 }

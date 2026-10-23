@@ -65,10 +65,11 @@ public class NotificationEmailHandlerTests
         await _email.Received(1)
             .SendAsync(
                 "friend@example.com",
-                "\"Board games\" is on!",
-                Arg.Is<string>(body => body.Contains("20:00 - 22:00", StringComparison.Ordinal)
-                    && body.Contains("Where: Max's place", StringComparison.Ordinal)
-                    && body.Contains($"https://pyf.example/groups/{_group.Id}", StringComparison.Ordinal)),
+                Arg.Is<EmailMessage>(m => m.Subject == "\"Board games\" is on!"
+                    && m.Text.Contains("20:00 - 22:00", StringComparison.Ordinal)
+                    && m.Text.Contains("Where: Max's place", StringComparison.Ordinal)
+                    && m.Html.Contains("Max&#39;s place", StringComparison.Ordinal)
+                    && m.Html.Contains($"https://pyf.example/groups/{_group.Id}", StringComparison.Ordinal)),
                 Arg.Any<CancellationToken>());
     }
 
@@ -82,7 +83,7 @@ public class NotificationEmailHandlerTests
 
         await _handler.HandleAsync(Request(NotificationKind.EventCancelled), CancellationToken.None);
 
-        await _email.DidNotReceiveWithAnyArgs().SendAsync(null!, null!, null!, CancellationToken.None);
+        await _email.DidNotReceiveWithAnyArgs().SendAsync(null!, null!, CancellationToken.None);
     }
 
     [Fact]
@@ -91,6 +92,6 @@ public class NotificationEmailHandlerTests
         await _handler.HandleAsync(
             JsonSerializer.Serialize(new NotificationEmailRequested(Guid.NewGuid())), CancellationToken.None);
 
-        await _email.DidNotReceiveWithAnyArgs().SendAsync(null!, null!, null!, CancellationToken.None);
+        await _email.DidNotReceiveWithAnyArgs().SendAsync(null!, null!, CancellationToken.None);
     }
 }

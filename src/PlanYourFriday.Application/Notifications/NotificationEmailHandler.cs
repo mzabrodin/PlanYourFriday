@@ -39,7 +39,7 @@ public sealed class NotificationEmailHandler(
         }
 
         var actor = notification.ActorId is { } actorId ? await users.GetByIdAsync(actorId, cancellationToken) : null;
-        var actorName = actor?.DisplayName ?? "Plan Your Friday";
+        var actorName = actor?.DisplayName ?? "PlanYourFriday";
         var details = notification.Kind == NotificationKind.EventConfirmed
             && await events.FindConfirmedByGroupAsync(group.Id, cancellationToken) is { } @event
                 ? NotificationEmail.Describe(@event, recipient.TimeZone)
@@ -47,6 +47,6 @@ public sealed class NotificationEmailHandler(
         var link = new Uri(options.Value.PublicUrl, $"/groups/{group.Id}");
 
         var message = NotificationEmail.Compose(notification.Kind, group.Title, actorName, link, details);
-        await email.SendAsync(recipient.Email, message.Subject, message.Body, cancellationToken);
+        await email.SendAsync(recipient.Email, message, cancellationToken);
     }
 }

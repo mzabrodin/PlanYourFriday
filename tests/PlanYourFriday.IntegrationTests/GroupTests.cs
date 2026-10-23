@@ -24,7 +24,7 @@ public class GroupTests(ApiFactory api) : ApiTest(api)
         Assert.Equal("REVOKED", invitation.GetProperty("status").GetString());
         using var scope = Api.Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<OutboxDispatcher>().DispatchDueAsync(CancellationToken.None);
-        await Api.Email.DidNotReceiveWithAnyArgs().SendAsync(null!, null!, null!, CancellationToken.None);
+        await Api.Email.DidNotReceiveWithAnyArgs().SendAsync(null!, null!, CancellationToken.None);
     }
 
     [Fact]

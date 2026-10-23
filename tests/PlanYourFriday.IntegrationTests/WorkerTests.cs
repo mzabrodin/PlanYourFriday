@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using PlanYourFriday.Application.Calendar;
+using PlanYourFriday.Application.Common;
 using PlanYourFriday.Application.Groups;
 using PlanYourFriday.Application.Notifications;
 using PlanYourFriday.Application.Outbox;
@@ -54,14 +55,12 @@ public class WorkerTests(ApiFactory api) : ApiTest(api)
         await Api.Email.Received(1)
             .SendAsync(
                 "olia@example.com",
-                Arg.Is<string>(s => s.Contains("invited you", StringComparison.Ordinal)),
-                Arg.Any<string>(),
+                Arg.Is<EmailMessage>(m => m.Subject.Contains("invited you", StringComparison.Ordinal)),
                 Arg.Any<CancellationToken>());
         await Api.Email.Received(1)
             .SendAsync(
                 tania.Email,
-                Arg.Is<string>(s => s.Contains("added you", StringComparison.Ordinal)),
-                Arg.Any<string>(),
+                Arg.Is<EmailMessage>(m => m.Subject.Contains("added you", StringComparison.Ordinal)),
                 Arg.Any<CancellationToken>());
         Assert.Equal(
             "SENT",

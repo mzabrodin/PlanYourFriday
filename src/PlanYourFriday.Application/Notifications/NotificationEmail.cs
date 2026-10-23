@@ -1,12 +1,11 @@
 using System.Globalization;
 
+using PlanYourFriday.Application.Common;
 using PlanYourFriday.Domain.Events;
 using PlanYourFriday.Domain.Notifications;
 using PlanYourFriday.Domain.Users;
 
 namespace PlanYourFriday.Application.Notifications;
-
-public sealed record EmailMessage(string Subject, string Body);
 
 public static class NotificationEmail
 {
@@ -22,58 +21,128 @@ public static class NotificationEmail
         return PreferenceFor(kind)?.Invoke(settings) ?? false;
     }
 
-    public static EmailMessage Compose(NotificationKind kind, string groupTitle, string actorName, Uri link, string? eventDetails)
+    public static EmailMessage Compose(
+        NotificationKind kind,
+        string groupTitle,
+        string actorName,
+        Uri link,
+        IReadOnlyList<EmailDetail>? eventDetails)
     {
-        return kind switch
+        ArgumentNullException.ThrowIfNull(link);
+
+        var footer = "You're getting this because email notifications are on for your PlanYourFriday account.";
+        var settings = new Uri(link, "/settings");
+        var content = kind switch
         {
-            NotificationKind.Invited => new EmailMessage(
-                $"{actorName} added you to \"{groupTitle}\"",
-                $"{actorName} added you to \"{groupTitle}\" on Plan Your Friday.\nMark when you're free so everyone can find a time:\n\n{link}"),
-            NotificationKind.DeadlineSoon => new EmailMessage(
-                $"Mark your free time for \"{groupTitle}\"",
-                $"The deadline to mark your free time for \"{groupTitle}\" is coming up. It takes a minute:\n\n{link}"),
-            NotificationKind.EventConfirmed => new EmailMessage(
-                $"\"{groupTitle}\" is on!",
-                $"{actorName} confirmed the time for \"{groupTitle}\".\n\n{eventDetails}\n\nDetails: {link}"),
-            NotificationKind.EventCancelled => new EmailMessage(
-                $"\"{groupTitle}\" was cancelled",
-                $"{actorName} cancelled the event for \"{groupTitle}\". The group is back to picking a time:\n\n{link}"),
+            NotificationKind.Invited => new EmailContent
+            {
+                Subject = $"{actorName} added you to \"{groupTitle}\"",
+                Tone = EmailTone.Planning,
+                Eyebrow = "New plan",
+                Heading = $"{actorName} added you to \u201c{groupTitle}\u201d",
+                Paragraphs = ["Mark when you're free so everyone can find a time. It takes about a minute."],
+                ActionLabel = "Mark my free time",
+                ActionUrl = link,
+                Footer = footer,
+                SettingsUrl = settings,
+            },
+            NotificationKind.DeadlineSoon => new EmailContent
+            {
+                Subject = $"Mark your free time for \"{groupTitle}\"",
+                Tone = EmailTone.Planning,
+                Eyebrow = "Deadline soon",
+                Heading = $"Last call for \u201c{groupTitle}\u201d",
+                Paragraphs =
+                [
+                    "The deadline to mark your free time is coming up. Add yours so the group picks a time that works for you too.",
+                ],
+                ActionLabel = "Mark my free time",
+                ActionUrl = link,
+                Footer = footer,
+                SettingsUrl = settings,
+            },
+            NotificationKind.EventConfirmed => new EmailContent
+            {
+                Subject = $"\"{groupTitle}\" is on!",
+                Tone = EmailTone.Scheduled,
+                Eyebrow = "It's on",
+                Heading = $"\u201c{groupTitle}\u201d is on!",
+                Paragraphs =
+                [
+                    $"{actorName} confirmed the time. If your Google Calendar is connected, the event is already there.",
+                ],
+                Details = eventDetails ?? [],
+                ActionLabel = "Open the plan",
+                ActionUrl = link,
+                Footer = footer,
+                SettingsUrl = settings,
+            },
+            NotificationKind.EventCancelled => new EmailContent
+            {
+                Subject = $"\"{groupTitle}\" was cancelled",
+                Tone = EmailTone.Cancelled,
+                Eyebrow = "Cancelled",
+                Heading = $"\u201c{groupTitle}\u201d was cancelled",
+                Paragraphs = [$"{actorName} cancelled the event. The group is back to picking a time."],
+                ActionLabel = "See the group",
+                ActionUrl = link,
+                Footer = footer,
+                SettingsUrl = settings,
+            },
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "This notification has no email."),
         };
+
+        return EmailLayout.Render(content);
     }
 
     public static EmailMessage ComposeReminder(Event @event, string timeZoneId, Uri link)
     {
         ArgumentNullException.ThrowIfNull(@event);
+        ArgumentNullException.ThrowIfNull(link);
 
-        return new EmailMessage(
-            $"Reminder: \"{@event.Title}\" is coming up",
-            $"{Describe(@event, timeZoneId)}\n\n{link}");
+        return EmailLayout.Render(new EmailContent
+        {
+            Subject = $"Reminder: \"{@event.Title}\" is coming up",
+            Tone = EmailTone.Scheduled,
+            Eyebrow = "Reminder",
+            Heading = $"\u201c{@event.Title}\u201d is coming up",
+            Paragraphs = ["A quick heads-up so it doesn't sneak up on you."],
+            Details = Describe(@event, timeZoneId),
+            ActionLabel = "Open the plan",
+            ActionUrl = link,
+            Footer = "You're getting this because you're going to this event on PlanYourFriday.",
+            SettingsUrl = new Uri(link, "/settings"),
+        });
     }
 
-    public static string Describe(Event @event, string timeZoneId)
+    public static IReadOnlyList<EmailDetail> Describe(Event @event, string timeZoneId)
     {
         ArgumentNullException.ThrowIfNull(@event);
 
         var timeZone = TimeZoneInfo.TryFindSystemTimeZoneById(timeZoneId, out var found) ? found : TimeZoneInfo.Utc;
         var start = TimeZoneInfo.ConvertTimeFromUtc(@event.Time.Start, timeZone);
         var end = TimeZoneInfo.ConvertTimeFromUtc(@event.Time.End, timeZone);
-        var lines = new List<string>
+        var details = new List<EmailDetail>
         {
-            string.Create(CultureInfo.InvariantCulture, $"When: {start:ddd d MMM, HH:mm} - {end:HH:mm} ({timeZone.Id})"),
+            new("When", string.Create(CultureInfo.InvariantCulture, $"{start:ddd d MMM, HH:mm} - {end:HH:mm} ({timeZone.Id})")),
         };
 
         if (@event.Location is not null)
         {
-            lines.Add($"Where: {@event.Location}");
+            details.Add(new EmailDetail("Where", @event.Location));
         }
 
         if (@event.MeetingLink is not null)
         {
-            lines.Add($"Link: {@event.MeetingLink}");
+            details.Add(new EmailDetail("Link", @event.MeetingLink));
         }
 
-        return string.Join('\n', lines);
+        if (@event.Description is not null)
+        {
+            details.Add(new EmailDetail("Notes", @event.Description));
+        }
+
+        return details;
     }
 
     private static Func<NotificationSettings, bool>? PreferenceFor(NotificationKind kind)

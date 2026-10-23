@@ -74,6 +74,24 @@ public class FlowTests(ApiFactory api) : ApiTest(api)
         Assert.True(problem.GetProperty("errors").TryGetProperty("Username", out _));
     }
 
+    [Theory]
+    [InlineData("", null, "Title")]
+    [InlineData("Board games", "javascript:alert(1)", "MeetingLink")]
+    [InlineData("Board games", "not a url", "MeetingLink")]
+    public async Task ConfirmingWithInvalidDetails_IsBadRequest(string title, string? meetingLink, string field)
+    {
+        var max = await SignInAsync("Max");
+        var group = await CreateGroupAsync(max);
+
+        using var response = await max.SendRawAsync(
+            HttpMethod.Post,
+            $"/api/groups/{group.GetProperty("id").GetString()}/event",
+            new { title, time = Range(18, 20), location = "", meetingLink, description = (string?)null });
+
+        var problem = await ProblemAsync(response, HttpStatusCode.BadRequest);
+        Assert.True(problem.GetProperty("errors").TryGetProperty(field, out _));
+    }
+
     [Fact]
     public async Task CancellingTheEvent_SendsTheGroupBackToPlanning()
     {

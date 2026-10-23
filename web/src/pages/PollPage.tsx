@@ -16,14 +16,7 @@ export function PollPage() {
 
   if (isPending) return <Loading />
   if (error || !poll) {
-    return (
-      <div className="narrow stack">
-        <ErrorState error={error} onRetry={refetch} />
-        <Link to="/ideas" className="btn">
-          Back to ideas
-        </Link>
-      </div>
-    )
+    return <ErrorState error={error} onRetry={refetch} back={{ to: '/ideas', label: 'Back to ideas' }} />
   }
   return <Poll poll={poll} meId={me?.id} />
 }

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import type { EventStatus, GroupStatus, InvitationStatus } from '../api'
+import { Link } from 'react-router'
+import { ApiError, type EventStatus, type GroupStatus, type InvitationStatus } from '../api'
 import { errorMessage } from '../lib/errors'
 
 export function Loading({ label = 'Loading…' }: { label?: string }) {
@@ -11,15 +12,32 @@ export function Loading({ label = 'Loading…' }: { label?: string }) {
   )
 }
 
-export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+export function ErrorState({
+  error,
+  onRetry,
+  back,
+}: {
+  error: unknown
+  onRetry?: () => void
+  back?: { to: string; label: string }
+}) {
+  // Retrying won't bring back something that doesn't exist or isn't ours to see.
+  const gone = error instanceof ApiError && (error.status === 404 || error.status === 403)
   return (
     <div className="state state-error" role="alert">
       <p>{errorMessage(error)}</p>
-      {onRetry && (
-        <button type="button" className="btn" onClick={onRetry}>
-          Try again
-        </button>
-      )}
+      <div className="state-actions">
+        {onRetry && !gone && (
+          <button type="button" className="btn" onClick={onRetry}>
+            Try again
+          </button>
+        )}
+        {back && (
+          <Link to={back.to} className="btn">
+            {back.label}
+          </Link>
+        )}
+      </div>
     </div>
   )
 }

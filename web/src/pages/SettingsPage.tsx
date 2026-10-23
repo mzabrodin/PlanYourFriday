@@ -454,6 +454,16 @@ function SettingsForm({
   )
 }
 
+// The same zone can have several names (Europe/Kyiv and the older Europe/Kiev), so compare what the browser resolves them to.
+function sameZone(a: string, b: string) {
+  try {
+    const resolve = (tz: string) => new Intl.DateTimeFormat('en', { timeZone: tz }).resolvedOptions().timeZone
+    return resolve(a) === resolve(b)
+  } catch {
+    return a === b
+  }
+}
+
 function TimeZoneSelect({ value, onChange }: { value: string; onChange: (tz: string) => void }) {
   const detected = Intl.DateTimeFormat().resolvedOptions().timeZone
   const zones = typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : [detected]
@@ -467,7 +477,7 @@ function TimeZoneSelect({ value, onChange }: { value: string; onChange: (tz: str
           </option>
         ))}
       </select>
-      {value !== detected && (
+      {!sameZone(value, detected) && (
         <button type="button" className="link-button small" onClick={() => onChange(detected)}>
           Use this device's: {detected.replaceAll('_', ' ')}
         </button>

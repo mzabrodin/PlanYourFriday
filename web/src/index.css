@@ -449,6 +449,21 @@ a {
   color: var(--danger);
 }
 
+.state-error p {
+  margin: 0;
+}
+
+.state-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.state-actions:empty {
+  display: none;
+}
+
 .spinner {
   width: 22px;
   height: 22px;
@@ -3315,7 +3330,7 @@ div.suggestion-row {
 .bell-badge {
   position: absolute;
   top: 2px;
-  right: 1px;
+  right: -4px;
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
@@ -3822,11 +3837,14 @@ select {
 }
 
 @media (max-width: 600px) {
+  /* Spread the tabs over the full width so all of them fit on a phone; scroll only on really narrow screens. */
   .tabs {
+    display: grid;
+    grid-auto-flow: column;
+    justify-content: space-between;
     overflow-x: auto;
     scrollbar-width: none;
-    margin: 0 -4px;
-    padding: 0 4px;
+    margin: 0 -8px;
   }
 
   .tabs::-webkit-scrollbar {
@@ -3834,7 +3852,8 @@ select {
   }
 
   .tabs a {
-    padding: 6px 10px;
+    padding: 6px 8px;
+    font-size: 0.85rem;
   }
 }
 

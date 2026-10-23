@@ -37,7 +37,11 @@ export function GroupPage() {
   const [openedAt] = useState(Date.now)
 
   if (group.isPending) return <Loading />
-  if (group.error) return <ErrorState error={group.error} onRetry={group.refetch} />
+  if (group.error) {
+    return (
+      <ErrorState error={group.error} onRetry={group.refetch} back={{ to: '/groups', label: 'Back to my events' }} />
+    )
+  }
 
   const g = group.data
   const savedMine = availability.data?.find((a) => a.userId === me?.id)?.slots ?? []

@@ -4,7 +4,9 @@ export function memberNameMap(group: GroupDto, meId: string | undefined): Map<st
   return new Map(group.members.map((m) => [m.userId, m.userId === meId ? 'You' : m.displayName]))
 }
 
+// Used mid-sentence ("Waiting for you, Petro and Iryna"), so "You" goes first and lowercase.
 export function joinNames(names: string[]): string {
-  if (names.length <= 1) return names.join('')
-  return `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
+  const list = [...names.filter((n) => n === 'You').map(() => 'you'), ...names.filter((n) => n !== 'You')]
+  if (list.length <= 1) return list.join('')
+  return `${list.slice(0, -1).join(', ')} and ${list.at(-1)}`
 }

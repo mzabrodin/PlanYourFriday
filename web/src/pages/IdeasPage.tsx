@@ -75,7 +75,7 @@ function PollCard({ poll, now }: { poll: PollSummaryDto; now: number }) {
         <div className="poll-card-top">
           <h3>{poll.title}</h3>
           {poll.myVotePending ? (
-            <span className="badge badge-vote">your vote</span>
+            <span className="badge badge-vote">vote needed</span>
           ) : (
             <span className={`badge ${closed ? 'badge-ok' : 'badge-info'}`}>{closed ? 'decided' : 'open'}</span>
           )}

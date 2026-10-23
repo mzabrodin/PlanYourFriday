@@ -6,6 +6,7 @@ import '@fullcalendar/react/skeleton.css'
 import '@fullcalendar/react/themes/classic/theme.css'
 import '@fullcalendar/react/themes/classic/palette.css'
 import type { EventDto, TimeRange } from '../api'
+import { useSyncExternalStore } from 'react'
 import { usePrefs } from '../api/queries'
 import { mergeRanges } from '../lib/time'
 
@@ -20,6 +21,19 @@ interface Props {
 }
 
 const DAY_MS = 86_400_000
+const NARROW = '(max-width: 600px)'
+
+// On a phone seven day columns don't fit, so show three and let people page through the rest.
+function useNarrowScreen() {
+  return useSyncExternalStore(
+    (onChange) => {
+      const query = window.matchMedia(NARROW)
+      query.addEventListener('change', onChange)
+      return () => query.removeEventListener('change', onChange)
+    },
+    () => window.matchMedia(NARROW).matches,
+  )
+}
 
 function startOfDay(iso: string) {
   const d = new Date(iso)
@@ -29,10 +43,12 @@ function startOfDay(iso: string) {
 
 export function AvailabilityCalendar({ window, mySlots, otherSlots, optimalSlots, event, editable, onChange }: Props) {
   const prefs = usePrefs()
+  const narrow = useNarrowScreen()
   const hour12 = prefs.timeFormat === '12h'
   const firstDay = startOfDay(window.start)
   const lastDay = new Date(startOfDay(window.end).getTime() + DAY_MS)
   const days = Math.round((lastDay.getTime() - firstDay.getTime()) / DAY_MS)
+  const visibleDays = Math.min(days, narrow ? 3 : 7)
 
   const windowStart = new Date(window.start)
   const windowEnd = new Date(window.end)
@@ -60,10 +76,11 @@ export function AvailabilityCalendar({ window, mySlots, otherSlots, optimalSlots
       <FullCalendar
         plugins={[timeGridPlugin, interactionPlugin, classicThemePlugin]}
         initialView="timeGrid"
-        dayCount={Math.min(days, 7)}
+        key={visibleDays}
+        dayCount={visibleDays}
         initialDate={firstDay}
         validRange={{ start: firstDay, end: lastDay }}
-        headerToolbar={days > 7 ? { start: 'prev,next', center: 'title', end: '' } : false}
+        headerToolbar={days > visibleDays ? { start: 'prev,next', center: 'title', end: '' } : false}
         allDaySlot={false}
         slotDuration="00:30:00"
         snapDuration="00:15:00"

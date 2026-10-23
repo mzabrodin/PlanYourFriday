@@ -11,14 +11,7 @@ export function AddFriendPage() {
 
   if (isPending) return <Loading />
   if (error || !person) {
-    return (
-      <div className="narrow stack">
-        <ErrorState error={error} />
-        <Link to="/friends" className="btn">
-          Go to friends
-        </Link>
-      </div>
-    )
+    return <ErrorState error={error} back={{ to: '/friends', label: 'Go to friends' }} />
   }
 
   const relation = add.data?.relation ?? person.relation

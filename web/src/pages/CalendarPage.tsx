@@ -185,12 +185,14 @@ export function CalendarPage() {
           <section className="card">
             <h3>What the colors mean</h3>
             <ul className="group-legend">
-              {(Object.keys(TONE_LABEL) as ItemTone[]).map((tone) => (
-                <li key={tone}>
-                  <span className="swatch" style={{ background: TONE_COLOR[tone] }} />
-                  {TONE_LABEL[tone]}
-                </li>
-              ))}
+              {(Object.keys(TONE_LABEL) as ItemTone[])
+                .filter((tone) => tone !== 'cancelled')
+                .map((tone) => (
+                  <li key={tone}>
+                    <span className="swatch" style={{ background: TONE_COLOR[tone] }} />
+                    {TONE_LABEL[tone]}
+                  </li>
+                ))}
             </ul>
           </section>
         </aside>

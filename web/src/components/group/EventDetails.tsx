@@ -114,7 +114,11 @@ export function EventDetails({ group, event, meId }: { group: GroupDto; event: E
                     className="btn btn-small btn-danger"
                     disabled={cancel.isPending}
                     onClick={() => {
-                      if (window.confirm('Cancel this event for everyone? It will be removed from their calendars.')) {
+                      if (
+                        window.confirm(
+                          'Cancel this event for everyone? It will be marked as cancelled and removed from their calendars.',
+                        )
+                      ) {
                         cancel.mutate(event.id)
                       }
                     }}

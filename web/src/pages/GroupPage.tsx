@@ -1,9 +1,11 @@
-import { ArrowLeft, CalendarDays, Check, ChevronDown, Clock, Hourglass } from 'lucide-react'
+import { ArrowLeft, Ban, CalendarDays, Check, ChevronDown, Clock, Hourglass, Trash2 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import type { GroupDto, TimeRange } from '../api'
 import {
   useAvailability,
+  useCancelGroup,
+  useDeleteGroup,
   useGroup,
   useImportFromCalendar,
   useMe,
@@ -76,7 +78,17 @@ export function GroupPage() {
             )}
           </ul>
         </div>
+        <OrganizerActions group={g} />
       </header>
+
+      {g.status === 'CANCELLED' && (
+        <p className="notice notice-cancelled icon-line">
+          <Ban size={18} aria-hidden="true" />
+          {g.myRole === 'ORGANIZER'
+            ? 'You cancelled this event. Everyone was notified.'
+            : `${g.members.find((m) => m.role === 'ORGANIZER')?.displayName ?? 'The organizer'} cancelled this event.`}
+        </p>
+      )}
 
       <PhaseSteps status={g.status} />
 
@@ -192,6 +204,51 @@ export function GroupPage() {
           {g.status !== 'SCHEDULED' && <MembersPanel group={g} />}
         </aside>
       </div>
+    </div>
+  )
+}
+
+function OrganizerActions({ group }: { group: GroupDto }) {
+  const navigate = useNavigate()
+  const cancel = useCancelGroup(group.id)
+  const remove = useDeleteGroup(group.id)
+  const [now] = useState(Date.now)
+  if (group.myRole !== 'ORGANIZER') return null
+
+  const over = group.status === 'CANCELLED' || new Date(group.event?.time.end ?? group.window.end).getTime() < now
+  // A scheduled event has its own "Cancel event" button next to the details.
+  const canCancel = !over && group.status !== 'SCHEDULED'
+
+  if (!canCancel && !over) return null
+  return (
+    <div className="group-header-actions">
+      {canCancel && (
+        <button
+          type="button"
+          className="btn btn-small btn-danger"
+          disabled={cancel.isPending}
+          onClick={() => {
+            if (window.confirm('Cancel this event for everyone? Everyone gets notified.')) cancel.mutate()
+          }}
+        >
+          <Ban size={16} aria-hidden="true" /> {cancel.isPending ? 'Cancelling…' : 'Cancel event'}
+        </button>
+      )}
+      {over && (
+        <button
+          type="button"
+          className="btn btn-small btn-danger"
+          disabled={remove.isPending}
+          onClick={() => {
+            if (window.confirm("Delete this event for everyone? This can't be undone.")) {
+              remove.mutate(undefined, { onSuccess: () => navigate('/groups', { replace: true }) })
+            }
+          }}
+        >
+          <Trash2 size={16} aria-hidden="true" /> {remove.isPending ? 'Deleting…' : 'Delete event'}
+        </button>
+      )}
+      <InlineError error={cancel.error ?? remove.error} />
     </div>
   )
 }

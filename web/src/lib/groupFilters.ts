@@ -1,6 +1,6 @@
 import type { GroupSummaryDto } from '../api/types'
 
-export type GroupView = 'upcoming' | 'needs-input' | 'planning' | 'scheduled' | 'past' | 'all'
+export type GroupView = 'upcoming' | 'needs-input' | 'planning' | 'scheduled' | 'past' | 'cancelled' | 'all'
 export type RoleFilter = 'any' | 'organizer' | 'participant'
 export type GroupSort = 'soonest' | 'latest' | 'title'
 
@@ -9,7 +9,8 @@ export const GROUP_VIEWS: { value: GroupView; label: string }[] = [
   { value: 'needs-input', label: 'Needs your input' },
   { value: 'planning', label: 'Planning' },
   { value: 'scheduled', label: 'Scheduled' },
-  { value: 'past', label: 'Past & cancelled' },
+  { value: 'past', label: 'Past' },
+  { value: 'cancelled', label: 'Cancelled' },
   { value: 'all', label: 'All' },
 ]
 
@@ -33,7 +34,8 @@ export function needsMyInput(g: GroupSummaryDto, now: number): boolean {
 }
 
 export function matchesView(g: GroupSummaryDto, view: GroupView, now: number): boolean {
-  const over = g.status === 'CANCELLED' || groupEnd(g) < now
+  const cancelled = g.status === 'CANCELLED'
+  const over = cancelled || groupEnd(g) < now
   switch (view) {
     case 'upcoming':
       return !over
@@ -44,7 +46,9 @@ export function matchesView(g: GroupSummaryDto, view: GroupView, now: number): b
     case 'scheduled':
       return !over && g.status === 'SCHEDULED'
     case 'past':
-      return over
+      return !cancelled && groupEnd(g) < now
+    case 'cancelled':
+      return cancelled
     case 'all':
       return true
   }

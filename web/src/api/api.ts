@@ -58,6 +58,8 @@ export interface Api {
   startVoting(groupId: string, body: StartVotingRequest): Promise<void>
   vote(groupId: string, optionId: string, answer: VoteAnswer): Promise<void>
   cancelVoting(groupId: string): Promise<void>
+  cancelGroup(groupId: string): Promise<void>
+  deleteGroup(groupId: string): Promise<void>
 
   getCalendar(range: TimeRange): Promise<CalendarItemDto[]>
 

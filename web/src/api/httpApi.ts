@@ -51,6 +51,8 @@ export const httpApi: Api = {
   vote: (groupId, optionId, answer) =>
     request(`/groups/${groupId}/options/${optionId}/vote`, { method: 'PUT', body: json({ answer }) }),
   cancelVoting: (groupId) => request(`/groups/${groupId}/voting`, { method: 'DELETE' }),
+  cancelGroup: (groupId) => request(`/groups/${groupId}/cancel`, { method: 'POST' }),
+  deleteGroup: (groupId) => request(`/groups/${groupId}`, { method: 'DELETE' }),
 
   getCalendar: ({ start, end }) => request(`/calendar?from=${encodeURIComponent(start)}&to=${encodeURIComponent(end)}`),
 

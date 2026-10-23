@@ -253,6 +253,29 @@ export function useCancelEvent(groupId: string) {
   })
 }
 
+export function useCancelGroup(groupId: string) {
+  const invalidate = useInvalidateGroup()
+  return useMutation({
+    mutationFn: () => api.cancelGroup(groupId),
+    onSuccess: () => invalidate(groupId),
+  })
+}
+
+export function useDeleteGroup(groupId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => api.deleteGroup(groupId),
+    onSuccess: () => {
+      qc.removeQueries({ queryKey: keys.group(groupId) })
+      return Promise.all([
+        qc.invalidateQueries({ queryKey: keys.groups, exact: true }),
+        qc.invalidateQueries({ queryKey: ['calendar'] }),
+        qc.invalidateQueries({ queryKey: keys.notifications }),
+      ])
+    },
+  })
+}
+
 export function useStartVoting(groupId: string) {
   const invalidate = useInvalidateGroup()
   return useMutation({

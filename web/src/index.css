@@ -23,6 +23,7 @@
   --stage-voting: #8e44ad;
   --stage-scheduled: #1f8a5b;
   --stage-done: #9a948a;
+  --stage-cancelled: #b5574c;
   --radius: 12px;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.04);
 
@@ -69,10 +70,7 @@
     --stage-voting: #c08ad9;
     --stage-scheduled: #4cc58c;
     --stage-done: #7d776d;
-    --stage-planning: #6aa3f2;
-    --stage-voting: #c08ad9;
-    --stage-scheduled: #4cc58c;
-    --stage-done: #7d776d;
+    --stage-cancelled: #d9776c;
     --shadow: none;
 
     color-scheme: dark;
@@ -104,6 +102,7 @@
   --stage-voting: #c08ad9;
   --stage-scheduled: #4cc58c;
   --stage-done: #7d776d;
+  --stage-cancelled: #d9776c;
   --shadow: none;
 
   color-scheme: dark;
@@ -882,6 +881,27 @@ select:focus {
   justify-content: space-between;
   align-items: flex-start;
   gap: 8px;
+}
+
+.group-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.group-header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.notice-cancelled {
+  background: color-mix(in srgb, var(--stage-cancelled) 12%, var(--surface));
+  color: var(--stage-cancelled);
+  font-weight: 500;
 }
 
 .group-header .title-row {

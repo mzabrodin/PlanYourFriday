@@ -1096,6 +1096,28 @@ export const mockApi: Api = {
     await delay(undefined, 150)
   },
 
+  async cancelGroup(groupId) {
+    const group = findGroup(groupId)
+    requireOrganizer(group)
+    if (group.status === 'CANCELLED') throw new ApiError(409, 'This event is already cancelled')
+    group.status = 'CANCELLED'
+    group.event = null
+    group.options = []
+    group.votingDeadline = null
+    save()
+    await delay(undefined)
+  },
+
+  async deleteGroup(groupId) {
+    const group = findGroup(groupId)
+    requireOrganizer(group)
+    const end = new Date(group.event?.time.end ?? group.window.end).getTime()
+    if (group.status !== 'CANCELLED' && end > Date.now()) throw new ApiError(409, 'Cancel the event before deleting it')
+    db.groups = db.groups.filter((g) => g.id !== groupId)
+    save()
+    await delay(undefined)
+  },
+
   async cancelVoting(groupId) {
     const group = findGroup(groupId)
     requireOrganizer(group)
@@ -1391,7 +1413,7 @@ export const mockApi: Api = {
     if (!group) throw new ApiError(404, 'Event not found')
     requireOrganizer(group)
     group.event = null
-    group.status = 'PLANNING'
+    group.status = 'CANCELLED'
     group.options = []
     save()
     await delay(undefined)

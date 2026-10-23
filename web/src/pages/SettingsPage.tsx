@@ -24,6 +24,7 @@ import {
 import { SettingRow, SettingsSection, Segmented, Switch } from '../components/settings/Controls'
 import { ErrorState, InlineError, Loading } from '../components/States'
 import { UserAvatar } from '../components/UserAvatar'
+import { DurationPicker } from '../components/DurationPicker'
 import { applyTheme } from '../lib/preferences'
 import { formatRelative } from '../lib/time'
 
@@ -69,10 +70,7 @@ function useActiveSection(ids: readonly string[]): string {
 
 const SECTION_IDS = SECTIONS.map((s) => s.id)
 
-const DURATIONS = [30, 60, 90, 120, 180, 240, 300, 480]
 const REMINDER_HOURS = [1, 3, 12, 24, 48]
-
-const durationLabel = (m: number) => (m < 60 ? `${m} min` : `${m / 60} h`)
 
 export function SettingsPage() {
   const me = useMe()
@@ -291,17 +289,12 @@ function SettingsForm({
               description="Pre-selected when you create a new event."
               htmlFor="defaultDuration"
             >
-              <select
+              <DurationPicker
                 id="defaultDuration"
                 value={prefs.defaultEventDurationMinutes}
-                onChange={(e) => setPrefs({ ...prefs, defaultEventDurationMinutes: Number(e.target.value) })}
-              >
-                {DURATIONS.map((m) => (
-                  <option key={m} value={m}>
-                    {durationLabel(m)}
-                  </option>
-                ))}
-              </select>
+                onChange={(m) => setPrefs({ ...prefs, defaultEventDurationMinutes: m })}
+                max={24 * 60}
+              />
             </SettingRow>
 
             <div className="setting-group">

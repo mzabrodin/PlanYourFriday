@@ -2,11 +2,10 @@ import { ArrowLeft } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useCreateGroup, useFriends, useMe, usePoll, usePrefs } from '../api/queries'
+import { DurationPicker, MIN_DURATION } from '../components/DurationPicker'
 import { FriendPicker } from '../components/friends/FriendPicker'
 import { InlineError } from '../components/States'
 import { fromLocalInput, toLocalInput } from '../lib/time'
-
-const DURATIONS = [30, 60, 90, 120, 180, 240, 300, 480]
 
 function defaultWindow() {
   const start = new Date()
@@ -47,6 +46,7 @@ export function CreateGroupPage() {
     const start = new Date(window.start)
     const end = new Date(window.end)
     if (end <= start) return setFormError('The window must end after it starts.')
+    if (duration < MIN_DURATION) return setFormError(`The event should be at least ${MIN_DURATION} minutes long.`)
     if (end.getTime() - start.getTime() < duration * 60_000) {
       return setFormError('The window is shorter than the event duration.')
     }
@@ -121,18 +121,10 @@ export function CreateGroupPage() {
         </fieldset>
 
         <div className="row">
-          <label>
-            Event length
-            <select value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
-              {[...new Set([...DURATIONS, prefs.defaultEventDurationMinutes])]
-                .sort((a, b) => a - b)
-                .map((m) => (
-                  <option key={m} value={m}>
-                    {m < 60 ? `${m} min` : `${m / 60} h`}
-                  </option>
-                ))}
-            </select>
-          </label>
+          <div className="field">
+            <label htmlFor="duration">Event length</label>
+            <DurationPicker id="duration" value={duration} onChange={setDuration} max={7 * 24 * 60} />
+          </div>
           <label>
             <span>
               Availability deadline <span className="optional">(optional)</span>

@@ -4544,3 +4544,29 @@ select {
     align-items: flex-start;
   }
 }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.duration-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+}
+
+.duration-custom {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.duration-custom input {
+  width: 72px;
+}

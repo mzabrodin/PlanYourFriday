@@ -264,7 +264,7 @@ function Legend() {
         <span className="swatch swatch-mine" /> You're free
       </li>
       <li>
-        <span className="swatch swatch-others" /> Others free (darker = more people)
+        <span className="swatch swatch-others" /> Others free (stronger = more people)
       </li>
       <li>
         <span className="swatch swatch-optimal" /> Everyone free

@@ -46,7 +46,8 @@ function toEventInput(item: CalendarItemDto, now: number): EventInput {
     id: item.id,
     start: item.time.start,
     end: item.time.end,
-    extendedProps: { item },
+    // Confirmed events first, so a busy day never hides the one thing that is actually happening.
+    extendedProps: { item, priority: item.kind === 'EVENT' ? 0 : item.kind === 'PLANNING' ? 1 : 2 },
     className: `pc-tone pc-${tone}`,
   }
   switch (item.kind) {
@@ -124,6 +125,7 @@ export function CalendarPage() {
             firstDay={prefs.weekStartsOn}
             height={760}
             dayMaxEvents={3}
+            eventOrder="priority,start,-duration,title"
             eventDisplay="block"
             nowIndicator
             scrollTime="08:00:00"

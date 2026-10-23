@@ -52,6 +52,9 @@ export function AvailabilityCalendar({ window, mySlots, otherSlots, optimalSlots
 
   const windowStart = new Date(window.start)
   const windowEnd = new Date(window.end)
+  // Open the grid where the interesting part is: the event, the times being voted on, or the window start.
+  const focus = event?.time.start ?? [...optimalSlots].sort((x, y) => x.start.localeCompare(y.start))[0]?.start
+  const focusHour = new Date(focus ?? window.start).getHours()
   const insideWindow = (span: DateSpanApi) => !span.allDay && span.start >= windowStart && span.end <= windowEnd
 
   const events: EventInput[] = [
@@ -84,7 +87,7 @@ export function AvailabilityCalendar({ window, mySlots, otherSlots, optimalSlots
         allDaySlot={false}
         slotDuration="00:30:00"
         snapDuration="00:15:00"
-        scrollTime={`${String(Math.max(0, windowStart.getHours() - 1)).padStart(2, '0')}:00:00`}
+        scrollTime={`${String(Math.max(0, focusHour - 1)).padStart(2, '0')}:00:00`}
         height={640}
         slotHeaderFormat={{ hour: '2-digit', minute: '2-digit', hour12 }}
         eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12 }}

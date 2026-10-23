@@ -18,6 +18,7 @@
   --danger-bg: #fbe5e2;
   --mine: #e2572b;
   --others: 46 95 184;
+  --others-alpha: 0.18;
   --optimal: #1f8a5b;
   --stage-planning: #2e6fd1;
   --stage-voting: #8e44ad;
@@ -65,6 +66,7 @@
     --danger-bg: #3d1c19;
     --mine: #f06b3f;
     --others: 141 179 245;
+    --others-alpha: 0.28;
     --optimal: #5fd39b;
     --stage-planning: #6aa3f2;
     --stage-voting: #c08ad9;
@@ -97,6 +99,7 @@
   --danger-bg: #3d1c19;
   --mine: #f06b3f;
   --others: 141 179 245;
+  --others-alpha: 0.28;
   --optimal: #5fd39b;
   --stage-planning: #6aa3f2;
   --stage-voting: #c08ad9;
@@ -413,6 +416,10 @@ a {
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: capitalize;
+}
+
+.badge-sentence {
+  text-transform: none;
 }
 
 .badge-ok {
@@ -1134,7 +1141,7 @@ select:focus {
 }
 
 .calendar .fc-slot-others {
-  background: rgb(var(--others) / 0.18) !important;
+  background: rgb(var(--others) / var(--others-alpha)) !important;
   opacity: 1 !important;
 }
 
@@ -1200,6 +1207,25 @@ select:focus {
 
 .personal-calendar > * {
   min-width: 560px;
+}
+
+/* On phones the availability grid shows three days and the month view squeezes, so no forced width. */
+@media (max-width: 600px) {
+  .calendar > *,
+  .personal-calendar > * {
+    min-width: 0;
+  }
+
+  .calendar [class*='toolbar'],
+  .personal-calendar [class*='toolbar'] {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .calendar h2,
+  .personal-calendar h2 {
+    font-size: 1.05rem;
+  }
 }
 
 .personal-calendar .pc-event {

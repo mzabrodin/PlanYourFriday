@@ -136,7 +136,7 @@ function Poll({ poll, meId }: { poll: PollDto; meId: string | undefined }) {
       </section>
 
       <section className="card">
-        <h2 className="card-subtitle">Who's voting</h2>
+        <h2 className="card-subtitle">{closed ? 'Who voted' : "Who's voting"}</h2>
         <ul className="poll-people">
           {poll.participants.map((p) => (
             <li key={p.userId}>

@@ -33,7 +33,7 @@ export function GroupCard({ group: g, now }: { group: GroupSummaryDto; now: numb
             formatRange(g.event.time)
           ) : (
             <span className="muted">
-              Picking a time · {formatDate(g.window.start)}
+              {g.status === 'CANCELLED' ? 'Was planned for' : 'Picking a time'} · {formatDate(g.window.start)}
               {formatDate(g.window.start) !== formatDate(g.window.end) && <> – {formatDate(g.window.end)}</>}
             </span>
           )}

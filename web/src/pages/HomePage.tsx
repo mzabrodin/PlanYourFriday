@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router'
 import type { GroupSummaryDto } from '../api'
-import { useGroups, useMe } from '../api/queries'
+import { useFriends, useGroups, useMe } from '../api/queries'
 import { AvatarStack } from '../components/home/AvatarStack'
 import { NextUpCard } from '../components/home/NextUpCard'
 import { WeekStrip } from '../components/home/WeekStrip'
@@ -33,7 +33,7 @@ export function HomePage() {
 
   return (
     <div className="home">
-      <Hero groups={groups} upcoming={upcomingEvents} waiting={waitingOnMe} now={now} />
+      <Hero upcoming={upcomingEvents} waiting={waitingOnMe} now={now} />
 
       {isPending && <Loading />}
       {error && <ErrorState error={error} onRetry={refetch} />}
@@ -59,7 +59,7 @@ export function HomePage() {
           <span>
             <strong>All events</strong>
             <span className="muted small">
-              {groups.length} {groups.length === 1 ? 'group' : 'groups'} · search, filter, past plans
+              {groups.length} {groups.length === 1 ? 'event' : 'events'} · search, filter, past ones
             </span>
           </span>
           <ArrowRight size={20} aria-hidden="true" />
@@ -85,24 +85,14 @@ function fridayLine(now: number): { text: string; Icon: LucideIcon } {
   return { text: days === 1 ? 'Friday is tomorrow' : `Friday in ${days} days`, Icon: Hourglass }
 }
 
-function Hero({
-  groups,
-  upcoming,
-  waiting,
-  now,
-}: {
-  groups: GroupSummaryDto[] | undefined
-  upcoming: GroupSummaryDto[]
-  waiting: GroupSummaryDto[]
-  now: number
-}) {
+function Hero({ upcoming, waiting, now }: { upcoming: GroupSummaryDto[]; waiting: GroupSummaryDto[]; now: number }) {
   const { data: me } = useMe()
   const name = me?.displayName && me.displayName !== 'You' ? me.displayName.split(' ')[0] : null
   const thisWeek = upcoming.filter((g) => daysUntil(g.event!.time.start, now) < 7).length
-  const friends = [...new Set((groups ?? []).flatMap((g) => g.memberNames).filter((n) => n !== 'You'))]
+  const friends = (useFriends().data?.friends ?? []).map((f) => f.displayName)
 
   const summary = [
-    thisWeek > 0 ? `${thisWeek} ${thisWeek === 1 ? 'plan' : 'plans'} this week` : 'No plans this week yet',
+    thisWeek > 0 ? `${thisWeek} ${thisWeek === 1 ? 'event' : 'events'} this week` : 'No events this week yet',
     waiting.length > 0 && `${waiting.length} waiting for you`,
   ]
     .filter(Boolean)
@@ -132,11 +122,13 @@ function Hero({
         {friends.length > 0 && (
           <div className="hero-friends">
             <AvatarStack names={friends} max={5} />
-            <span className="muted small">{friends.length} friends</span>
+            <span className="muted small">
+              {friends.length} {friends.length === 1 ? 'friend' : 'friends'}
+            </span>
           </div>
         )}
         <Link to="/groups/new" className="btn btn-primary btn-big">
-          <Plus size={18} aria-hidden="true" /> New plan
+          <Plus size={18} aria-hidden="true" /> New event
         </Link>
       </div>
     </header>

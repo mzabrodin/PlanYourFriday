@@ -95,6 +95,10 @@ export function GroupsBrowser({ groups, now }: { groups: GroupSummaryDto[]; now:
               type="button"
               role="tab"
               aria-selected={filters.view === value}
+              // On phones the tab row scrolls; keep the selected tab in view.
+              ref={
+                filters.view === value ? (el) => el?.scrollIntoView({ block: 'nearest', inline: 'nearest' }) : undefined
+              }
               className={`view-tab${value === 'needs-input' && count > 0 ? ' view-tab-alert' : ''}`}
               onClick={() => update({ view: value })}
             >

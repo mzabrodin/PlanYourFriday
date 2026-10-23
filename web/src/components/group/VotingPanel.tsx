@@ -29,8 +29,17 @@ export function VotingPanel({ group, meId }: { group: GroupDto; meId: string | u
   const closed = group.votingDeadline !== null && new Date(group.votingDeadline).getTime() < now
   const options = [...group.options].sort((a, b) => a.time.start.localeCompare(b.time.start))
   const best = Math.max(0, ...options.map(optionScore))
-  const voted = group.members.filter((m) => options.every((o) => o.votes.some((v) => v.userId === m.userId)))
-  const notVoted = group.members.filter((m) => !voted.includes(m))
+  const answered = (userId: string) => options.filter((o) => o.votes.some((v) => v.userId === userId)).length
+  const voted = group.members.filter((m) => answered(m.userId) === options.length)
+  const notStarted = group.members.filter((m) => answered(m.userId) === 0)
+  const partly = group.members.filter((m) => answered(m.userId) > 0 && answered(m.userId) < options.length)
+  const nameList = (members: typeof group.members) => joinNames(members.map((m) => names.get(m.userId)!))
+  const partlyNames = nameList(partly)
+  const waiting = [
+    notStarted.length > 0 && `Waiting for ${nameList(notStarted)}`,
+    partly.length > 0 &&
+      `${partlyNames[0].toUpperCase()}${partlyNames.slice(1)} ${partly.length === 1 && partlyNames !== 'you' ? "hasn't" : "haven't"} answered every time yet`,
+  ].filter(Boolean)
 
   if (confirming) {
     return (
@@ -145,11 +154,7 @@ export function VotingPanel({ group, meId }: { group: GroupDto; meId: string | u
       <InlineError error={vote.error ?? cancelVoting.error} />
 
       <footer className="voting-footer">
-        <span className="muted small">
-          {notVoted.length > 0
-            ? `Waiting for ${joinNames(notVoted.map((m) => names.get(m.userId)!))}`
-            : 'Everyone has voted'}
-        </span>
+        <span className="muted small">{waiting.length > 0 ? waiting.join(' · ') : 'Everyone has voted'}</span>
         {isOrganizer && (
           <button
             type="button"

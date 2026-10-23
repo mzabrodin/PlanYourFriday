@@ -147,7 +147,7 @@ function Poll({ poll, meId }: { poll: PollDto; meId: string | undefined }) {
         <ul className="poll-people">
           {poll.participants.map((p) => (
             <li key={p.userId}>
-              <UserAvatar user={{ displayName: p.displayName, photoUrl: null }} size={28} />
+              <UserAvatar user={p} size={28} />
               <span>{names.get(p.userId)}</span>
               {voters.has(p.userId) ? (
                 <span className="tick">

@@ -51,6 +51,7 @@ export function FriendsPage() {
                     key={r.id}
                     displayName={r.person.displayName}
                     username={r.person.username}
+                    photoUrl={r.person.photoUrl}
                     detail="wants to be friends"
                   >
                     <button
@@ -86,6 +87,7 @@ export function FriendsPage() {
                     key={f.userId}
                     displayName={f.displayName}
                     username={f.username}
+                    photoUrl={f.photoUrl}
                     detail={`since ${formatDate(f.since)}`}
                   >
                     <button
@@ -115,6 +117,7 @@ export function FriendsPage() {
                     key={r.id}
                     displayName={r.person.displayName}
                     username={r.person.username}
+                    photoUrl={r.person.photoUrl}
                     detail="request sent"
                   >
                     <button
@@ -143,6 +146,7 @@ export function FriendsPage() {
                     key={s.person.userId}
                     displayName={s.person.displayName}
                     username={s.person.username}
+                    photoUrl={s.person.photoUrl}
                     detail={s.sharedGroups.join(', ')}
                   >
                     <button
@@ -233,7 +237,7 @@ function FindPeople() {
         ) : (
           <ul className="person-list">
             {search.data.map((p) => (
-              <PersonRow key={p.userId} displayName={p.displayName} username={p.username}>
+              <PersonRow key={p.userId} displayName={p.displayName} username={p.username} photoUrl={p.photoUrl}>
                 <RelationAction person={p} />
               </PersonRow>
             ))}

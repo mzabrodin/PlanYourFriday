@@ -73,7 +73,12 @@ internal sealed class GroupQueries(AppDbContext context) : IGroupQueries, ICalen
             group.Members.First(m => m.UserId == userId).Role,
             [
                 .. Ordered(group.Members).Select(m => new MemberView(
-                    m.UserId, users[m.UserId].DisplayName, users[m.UserId].Email, m.Role, m.HasAvailability)),
+                    m.UserId,
+                    users[m.UserId].DisplayName,
+                    users[m.UserId].Email,
+                    users[m.UserId].PhotoUrl,
+                    m.Role,
+                    m.HasAvailability)),
             ],
             invitations,
             [.. options.Select(o => new TimeOptionView(o.Id, new TimeRangeView(o.Start, o.End), o.FreeUserIds, o.Votes))],
@@ -87,7 +92,7 @@ internal sealed class GroupQueries(AppDbContext context) : IGroupQueries, ICalen
                 from m in context.GroupMembers.AsNoTracking()
                 join u in context.Users on m.UserId equals u.Id
                 where m.GroupId == groupId && m.UserId == userId
-                select new MemberView(m.UserId, u.DisplayName, u.Email, m.Role, m.Availability.Count != 0))
+                select new MemberView(m.UserId, u.DisplayName, u.Email, u.PhotoUrl, m.Role, m.Availability.Count != 0))
             .FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -253,7 +258,7 @@ internal sealed class GroupQueries(AppDbContext context) : IGroupQueries, ICalen
         return await context.Users
             .AsNoTracking()
             .Where(u => ids.Contains(u.Id))
-            .Select(u => new UserRow(u.Id, u.DisplayName, u.Email))
+            .Select(u => new UserRow(u.Id, u.DisplayName, u.Email, u.PhotoUrl))
             .ToDictionaryAsync(u => u.Id, cancellationToken);
     }
 
@@ -315,7 +320,7 @@ internal sealed class GroupQueries(AppDbContext context) : IGroupQueries, ICalen
 
     private sealed record MemberRow(Guid UserId, MemberRole Role, bool HasAvailability, DateTime JoinedAt);
 
-    private sealed record UserRow(Guid Id, string DisplayName, string Email);
+    private sealed record UserRow(Guid Id, string DisplayName, string Email, string? PhotoUrl);
 
     private sealed record EventRow(Guid GroupId, EventView View);
 }

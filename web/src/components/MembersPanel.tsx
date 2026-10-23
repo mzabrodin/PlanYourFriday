@@ -23,7 +23,7 @@ export function MembersPanel({ group }: { group: GroupDto }) {
       <ul className="member-list">
         {group.members.map((m) => (
           <li key={m.userId}>
-            <UserAvatar user={{ displayName: m.displayName, photoUrl: null }} size={30} />
+            <UserAvatar user={m} size={30} />
             <span className="member-name">
               {m.displayName}
               {m.role === 'ORGANIZER' && (

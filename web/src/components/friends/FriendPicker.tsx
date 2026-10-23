@@ -8,7 +8,7 @@ export function FriendPicker({
   onChange,
   label,
 }: {
-  friends: Pick<FriendDto, 'userId' | 'displayName'>[]
+  friends: Pick<FriendDto, 'userId' | 'displayName' | 'photoUrl'>[]
   selected: string[]
   onChange: (selected: string[]) => void
   label: string
@@ -29,7 +29,7 @@ export function FriendPicker({
                 <Check size={13} />
               </span>
             ) : (
-              <UserAvatar user={{ displayName: f.displayName, photoUrl: null }} size={22} />
+              <UserAvatar user={f} size={22} />
             )}
             {f.displayName}
           </label>

@@ -21,7 +21,8 @@ internal sealed class FriendQueries(AppDbContext context) : IFriendQueries
 
         var friends = links
             .Where(l => l.Status == FriendshipStatus.Accepted)
-            .Select(l => new FriendView(l.Other.Id, l.Other.DisplayName, l.Other.Username, l.Other.Email, l.AcceptedAt ?? l.CreatedAt))
+            .Select(l => new FriendView(
+                l.Other.Id, l.Other.DisplayName, l.Other.Username, l.Other.Email, l.Other.PhotoUrl, l.AcceptedAt ?? l.CreatedAt))
             .OrderBy(f => f.DisplayName, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
         var incoming = links
@@ -49,7 +50,7 @@ internal sealed class FriendQueries(AppDbContext context) : IFriendQueries
             .OrderBy(u => !u.Username.StartsWith(query))
             .ThenBy(u => u.DisplayName)
             .Take(MaxSearchResults)
-            .Select(u => new Person(u.Id, u.DisplayName, u.Username, u.Email))
+            .Select(u => new Person(u.Id, u.DisplayName, u.Username, u.Email, u.PhotoUrl))
             .ToListAsync(cancellationToken);
 
         return await WithRelationsAsync(userId, people, cancellationToken);
@@ -60,7 +61,7 @@ internal sealed class FriendQueries(AppDbContext context) : IFriendQueries
         var person = await context.Users
             .AsNoTracking()
             .Where(u => u.Id == otherId)
-            .Select(u => new Person(u.Id, u.DisplayName, u.Username, u.Email))
+            .Select(u => new Person(u.Id, u.DisplayName, u.Username, u.Email, u.PhotoUrl))
             .FirstOrDefaultAsync(cancellationToken);
 
         return person is null ? null : (await WithRelationsAsync(userId, [person], cancellationToken))[0];
@@ -109,7 +110,7 @@ internal sealed class FriendQueries(AppDbContext context) : IFriendQueries
                     f.RequesterId,
                     f.CreatedAt,
                     f.AcceptedAt,
-                    new Person(u.Id, u.DisplayName, u.Username, u.Email)))
+                    new Person(u.Id, u.DisplayName, u.Username, u.Email, u.PhotoUrl)))
             .ToListAsync(cancellationToken);
     }
 
@@ -128,7 +129,7 @@ internal sealed class FriendQueries(AppDbContext context) : IFriendQueries
                 join u in context.Users on other.UserId equals u.Id
                 select new
                 {
-                    Person = new Person(u.Id, u.DisplayName, u.Username, u.Email),
+                    Person = new Person(u.Id, u.DisplayName, u.Username, u.Email, u.PhotoUrl),
                     g.Title,
                     g.CreatedAt,
                 })
@@ -148,11 +149,11 @@ internal sealed class FriendQueries(AppDbContext context) : IFriendQueries
         ];
     }
 
-    private sealed record Person(Guid Id, string DisplayName, string Username, string Email)
+    private sealed record Person(Guid Id, string DisplayName, string Username, string Email, string? PhotoUrl)
     {
         public PersonView ToView(Relation relation)
         {
-            return new PersonView(Id, DisplayName, Username, relation);
+            return new PersonView(Id, DisplayName, Username, PhotoUrl, relation);
         }
     }
 

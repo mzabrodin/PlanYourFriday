@@ -15,9 +15,15 @@ public enum RequestDirection
     Outgoing,
 }
 
-public sealed record PersonView(Guid UserId, string DisplayName, string Username, Relation Relation);
+public sealed record PersonView(Guid UserId, string DisplayName, string Username, string? PhotoUrl, Relation Relation);
 
-public sealed record FriendView(Guid UserId, string DisplayName, string Username, string Email, DateTime Since);
+public sealed record FriendView(
+    Guid UserId,
+    string DisplayName,
+    string Username,
+    string Email,
+    string? PhotoUrl,
+    DateTime Since);
 
 public sealed record FriendRequestView(Guid Id, PersonView Person, RequestDirection Direction, DateTime CreatedAt);
 

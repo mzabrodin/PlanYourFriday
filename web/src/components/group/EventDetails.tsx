@@ -134,7 +134,7 @@ export function EventDetails({ group, event, meId }: { group: GroupDto; event: E
         <ul>
           {group.members.map((m) => (
             <li key={m.userId}>
-              <UserAvatar user={{ displayName: m.displayName, photoUrl: null }} size={30} />
+              <UserAvatar user={m} size={30} />
               <span>{m.userId === meId && m.displayName !== 'You' ? `${m.displayName} (you)` : m.displayName}</span>
               {m.role === 'ORGANIZER' && (
                 <span className="organizer-tag" title="Organizer">

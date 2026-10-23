@@ -608,6 +608,7 @@ function toMemberDto(group: StoredGroup, userId: string, role: MemberRole): Memb
     userId,
     displayName: user.displayName,
     email: user.email,
+    photoUrl: user.photoUrl,
     role,
     hasAvailability: (db.availability[group.id]?.[userId]?.length ?? 0) > 0,
   }
@@ -671,7 +672,13 @@ function relationTo(userId: string): Relation {
 
 function toPerson(userId: string): PersonDto {
   const u = user(userId)
-  return { userId, displayName: u.displayName, username: u.username, relation: relationTo(userId) }
+  return {
+    userId,
+    displayName: u.displayName,
+    username: u.username,
+    photoUrl: u.photoUrl,
+    relation: relationTo(userId),
+  }
 }
 
 function befriend(a: string, b: string) {
@@ -711,7 +718,11 @@ function toPollDto(poll: StoredPoll): PollDto {
     deadline: poll.deadline,
     multipleChoice: poll.multipleChoice,
     allowNewOptions: poll.allowNewOptions,
-    participants: poll.participantIds.map((id) => ({ userId: id, displayName: user(id).displayName })),
+    participants: poll.participantIds.map((id) => ({
+      userId: id,
+      displayName: user(id).displayName,
+      photoUrl: user(id).photoUrl,
+    })),
     options: poll.options.map((o) => ({ ...o, voterIds: [...o.voterIds] })),
     winnerOptionIds: pollWinners(poll),
     groupId: poll.groupId,
@@ -1140,7 +1151,14 @@ export const mockApi: Api = {
       .filter((f) => f.a === meId || f.b === meId)
       .map((f) => {
         const u = user(f.a === meId ? f.b : f.a)
-        return { userId: u.id, displayName: u.displayName, username: u.username, email: u.email, since: f.since }
+        return {
+          userId: u.id,
+          displayName: u.displayName,
+          username: u.username,
+          email: u.email,
+          photoUrl: u.photoUrl,
+          since: f.since,
+        }
       })
       .sort((a, b) => a.displayName.localeCompare(b.displayName))
     const request = (

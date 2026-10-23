@@ -4,17 +4,19 @@ import { UserAvatar } from '../UserAvatar'
 export function PersonRow({
   displayName,
   username,
+  photoUrl,
   detail,
   children,
 }: {
   displayName: string
   username: string
+  photoUrl: string | null
   detail?: ReactNode
   children?: ReactNode
 }) {
   return (
     <li className="person-row">
-      <UserAvatar user={{ displayName, photoUrl: null }} size={36} />
+      <UserAvatar user={{ displayName, photoUrl }} size={36} />
       <span className="person-text">
         <span className="person-name">{displayName}</span>
         <span className="muted small">

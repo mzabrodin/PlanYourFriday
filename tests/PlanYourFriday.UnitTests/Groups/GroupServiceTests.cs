@@ -42,7 +42,7 @@ public class GroupServiceTests
                 call.ArgAt<Guid>(0), "Board games", null, _organizer.Id, null, new TimeRangeView(At(2, 10), At(2, 22)),
                 120, null, GroupStatus.Planning, MemberRole.Organizer, [], [], [], null, null));
         _queries.GetMemberAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
-            .Returns(call => new MemberView(call.ArgAt<Guid>(1), "Friend", "friend@example.com", MemberRole.Participant, false));
+            .Returns(call => new MemberView(call.ArgAt<Guid>(1), "Friend", "friend@example.com", null, MemberRole.Participant, false));
         _friendships.ListFriendIdsAsync(_organizer.Id, Arg.Any<CancellationToken>())
             .Returns(new HashSet<Guid> { _friend.Id });
 

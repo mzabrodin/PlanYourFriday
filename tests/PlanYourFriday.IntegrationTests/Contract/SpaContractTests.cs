@@ -6,7 +6,7 @@ namespace PlanYourFriday.IntegrationTests.Contract;
 
 public class SpaContractTests
 {
-    private const string ValidPerson = """{"userId":"1","displayName":"Max","username":"max","relation":"FRIEND"}""";
+    private const string ValidPerson = """{"userId":"1","displayName":"Max","username":"max","photoUrl":null,"relation":"FRIEND"}""";
 
     private static JsonElement Json(string text)
     {
@@ -21,11 +21,11 @@ public class SpaContractTests
     }
 
     [Theory]
-    [InlineData("""{"userId":"1","displayName":"Max","relation":"FRIEND"}""", "$.username: missing")]
-    [InlineData("""{"userId":"1","displayName":"Max","username":"max","relation":"Friend"}""", "$.relation:")]
-    [InlineData("""{"userId":"1","displayName":"Max","username":"max","relation":"FRIEND","email":"x"}""", "$.email: not declared")]
-    [InlineData("""{"userId":1,"displayName":"Max","username":"max","relation":"FRIEND"}""", "$.userId: expected string")]
-    [InlineData("""{"user_id":"1","displayName":"Max","username":"max","relation":"FRIEND"}""", "$.userId: missing")]
+    [InlineData("""{"userId":"1","displayName":"Max","photoUrl":null,"relation":"FRIEND"}""", "$.username: missing")]
+    [InlineData("""{"userId":"1","displayName":"Max","username":"max","photoUrl":null,"relation":"Friend"}""", "$.relation:")]
+    [InlineData("""{"userId":"1","displayName":"Max","username":"max","photoUrl":null,"relation":"FRIEND","email":"x"}""", "$.email: not declared")]
+    [InlineData("""{"userId":1,"displayName":"Max","username":"max","photoUrl":null,"relation":"FRIEND"}""", "$.userId: expected string")]
+    [InlineData("""{"user_id":"1","displayName":"Max","username":"max","photoUrl":null,"relation":"FRIEND"}""", "$.userId: missing")]
     public void RejectsDrift(string json, string expectedError)
     {
         var exception = Assert.Throws<TrueException>(() => SpaContract.Verify(Json(json), "PersonDto"));

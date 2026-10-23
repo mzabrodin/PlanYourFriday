@@ -31,7 +31,7 @@ public class FriendServiceTests
         _users.FindByFriendCodeAsync(_other.FriendCode, Arg.Any<CancellationToken>()).Returns(_other);
         _users.FindByFriendCodeAsync(_me.FriendCode, Arg.Any<CancellationToken>()).Returns(_me);
         _queries.GetPersonAsync(_me.Id, Arg.Any<Guid>(), Arg.Any<CancellationToken>())
-            .Returns(call => new PersonView(call.ArgAt<Guid>(1), "Other", "other", Relation.None));
+            .Returns(call => new PersonView(call.ArgAt<Guid>(1), "Other", "other", null, Relation.None));
 
         _service = new FriendService(
             _currentUser,

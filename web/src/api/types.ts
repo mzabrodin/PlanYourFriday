@@ -77,6 +77,7 @@ export interface MemberDto {
   userId: string
   displayName: string
   email: string
+  photoUrl: string | null
   role: MemberRole
   hasAvailability: boolean
 }
@@ -236,6 +237,7 @@ export interface PersonDto {
   userId: string
   displayName: string
   username: string
+  photoUrl: string | null
   relation: Relation
 }
 
@@ -244,6 +246,7 @@ export interface FriendDto {
   displayName: string
   username: string
   email: string
+  photoUrl: string | null
   since: string
 }
 
@@ -272,6 +275,7 @@ export type PollStatus = 'OPEN' | 'CLOSED'
 export interface PollPersonDto {
   userId: string
   displayName: string
+  photoUrl: string | null
 }
 
 export interface PollOptionDto {

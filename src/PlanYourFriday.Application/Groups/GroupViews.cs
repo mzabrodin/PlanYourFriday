@@ -47,7 +47,13 @@ public sealed record GroupView(
     DateTime? VotingDeadline,
     EventView? Event);
 
-public sealed record MemberView(Guid UserId, string DisplayName, string Email, MemberRole Role, bool HasAvailability);
+public sealed record MemberView(
+    Guid UserId,
+    string DisplayName,
+    string Email,
+    string? PhotoUrl,
+    MemberRole Role,
+    bool HasAvailability);
 
 public sealed record InvitationView(Guid Id, string Email, InvitationStatus Status);
 

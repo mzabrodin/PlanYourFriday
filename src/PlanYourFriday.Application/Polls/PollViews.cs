@@ -6,7 +6,7 @@ public enum PollStatus
     Closed,
 }
 
-public sealed record PollPersonView(Guid UserId, string DisplayName);
+public sealed record PollPersonView(Guid UserId, string DisplayName, string? PhotoUrl);
 
 public sealed record PollOptionView(Guid Id, string Title, Guid AddedById, IReadOnlyList<Guid> VoterIds);
 

@@ -21,7 +21,7 @@ internal sealed class PollQueries(AppDbContext context) : IPollQueries
                 .Select(r => new PollSummaryView(
                     r.Id,
                     r.Title,
-                    names.GetValueOrDefault(r.CreatorId, UnknownName),
+                    names.GetValueOrDefault(r.CreatorId)?.DisplayName ?? UnknownName,
                     r.IsClosed(now) ? PollStatus.Closed : PollStatus.Open,
                     r.Deadline,
                     r.ParticipantIds.Count,
@@ -45,7 +45,7 @@ internal sealed class PollQueries(AppDbContext context) : IPollQueries
         var names = await NamesAsync([row], cancellationToken);
         string Name(Guid id)
         {
-            return names.GetValueOrDefault(id, UnknownName);
+            return names.GetValueOrDefault(id)?.DisplayName ?? UnknownName;
         }
 
         return new PollView(
@@ -62,7 +62,7 @@ internal sealed class PollQueries(AppDbContext context) : IPollQueries
                 .. row.ParticipantIds
                     .OrderBy(id => id == row.CreatorId ? 0 : 1)
                     .ThenBy(Name, StringComparer.CurrentCultureIgnoreCase)
-                    .Select(id => new PollPersonView(id, Name(id))),
+                    .Select(id => new PollPersonView(id, Name(id), names.GetValueOrDefault(id)?.PhotoUrl)),
             ],
             [.. row.Options.Select(o => new PollOptionView(o.Id, o.Title, o.AddedById, o.VoterIds))],
             row.IsClosed(now) ? [.. row.Leading().Select(o => o.Id)] : [],
@@ -99,13 +99,15 @@ internal sealed class PollQueries(AppDbContext context) : IPollQueries
             .ToListAsync(cancellationToken);
     }
 
-    private async Task<Dictionary<Guid, string>> NamesAsync(IEnumerable<PollRow> rows, CancellationToken cancellationToken)
+    private async Task<Dictionary<Guid, PersonRow>> NamesAsync(IEnumerable<PollRow> rows, CancellationToken cancellationToken)
     {
         var ids = rows.SelectMany(r => r.ParticipantIds.Append(r.CreatorId)).Distinct().ToList();
         return await context.Users
             .Where(u => ids.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => u.DisplayName, cancellationToken);
+            .ToDictionaryAsync(u => u.Id, u => new PersonRow(u.DisplayName, u.PhotoUrl), cancellationToken);
     }
+
+    private sealed record PersonRow(string DisplayName, string? PhotoUrl);
 
     private sealed record OptionRow(Guid Id, string Title, Guid AddedById, List<Guid> VoterIds);
 

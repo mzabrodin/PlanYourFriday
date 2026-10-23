@@ -26,7 +26,7 @@ export function AddFriendPage() {
   return (
     <div className="narrow">
       <section className="card add-friend">
-        <UserAvatar user={{ displayName: person.displayName, photoUrl: null }} size={72} />
+        <UserAvatar user={person} size={72} />
         <div>
           <h1>{person.displayName}</h1>
           <p className="muted">@{person.username}</p>

@@ -293,6 +293,7 @@ public sealed class Group : Entity
         return new Event(Id, OrganizerId, title, description, time, location, meetingLink);
     }
 
+    /// <summary>Cancels a plan that has no confirmed event yet. A scheduled one is cancelled via <see cref="CancelEvent"/>.</summary>
     public void Cancel()
     {
         if (Status == GroupStatus.Scheduled)
@@ -300,6 +301,12 @@ public sealed class Group : Entity
             throw new InvalidStateException("group.cancel_scheduled_event_instead", "Cancel the scheduled event instead.");
         }
 
+        if (Status == GroupStatus.Cancelled)
+        {
+            throw new InvalidStateException("group.already_cancelled", "This event is already cancelled.");
+        }
+
+        EndVoting();
         Status = GroupStatus.Cancelled;
     }
 
@@ -311,10 +318,7 @@ public sealed class Group : Entity
         }
 
         @event.Cancel();
-        if (Status == GroupStatus.Scheduled)
-        {
-            Status = GroupStatus.Planning;
-        }
+        Status = GroupStatus.Cancelled;
     }
 
     public void StartVoting(IEnumerable<TimeRange> options, DateTime? deadline, DateTime now)

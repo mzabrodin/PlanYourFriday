@@ -22,6 +22,14 @@ internal sealed class EventRepository(AppDbContext context) : IEventRepository
             .FirstOrDefaultAsync(e => e.GroupId == groupId && e.Status == EventStatus.Confirmed, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Event>> ListByGroupAsync(Guid groupId, CancellationToken cancellationToken)
+    {
+        return await context.Events
+            .Include(e => e.CalendarLinks)
+            .Where(e => e.GroupId == groupId)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Event>> ListNeedingSyncAsync(
         int max,
         DateTime retryFailedBefore,

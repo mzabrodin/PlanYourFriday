@@ -93,7 +93,7 @@ public class FlowTests(ApiFactory api) : ApiTest(api)
     }
 
     [Fact]
-    public async Task CancellingTheEvent_SendsTheGroupBackToPlanning()
+    public async Task CancellingTheEvent_CancelsTheGroup()
     {
         var max = await SignInAsync("Max");
         var group = await CreateGroupAsync(max);
@@ -110,8 +110,33 @@ public class FlowTests(ApiFactory api) : ApiTest(api)
         await max.DeleteAsync($"/api/events/{@event.GetProperty("id").GetString()}");
 
         var reloaded = await max.GetAsync($"/api/groups/{groupId}");
-        Assert.Equal("PLANNING", reloaded.GetProperty("status").GetString());
+        Assert.Equal("CANCELLED", reloaded.GetProperty("status").GetString());
         Assert.Equal(JsonValueKind.Null, reloaded.GetProperty("event").ValueKind);
+    }
+
+    [Fact]
+    public async Task OrganizerCancelsAPlanThenDeletesIt()
+    {
+        var max = await SignInAsync("Max");
+        var tania = await SignInAsync("Tania");
+        var group = await CreateGroupAsync(max);
+        var groupId = group.GetProperty("id").GetString();
+        await tania.PostAsync($"/api/groups/join/{group.GetProperty("inviteToken").GetString()}");
+
+        using var activeDelete = await max.SendRawAsync(HttpMethod.Delete, $"/api/groups/{groupId}");
+        var problem = await ProblemAsync(activeDelete, HttpStatusCode.Conflict);
+        Assert.Equal("group.delete_active", problem.GetProperty("code").GetString());
+
+        using var participantCancel = await tania.SendRawAsync(HttpMethod.Post, $"/api/groups/{groupId}/cancel");
+        await ProblemAsync(participantCancel, HttpStatusCode.Forbidden);
+
+        await max.PostAsync($"/api/groups/{groupId}/cancel");
+        Assert.Equal("CANCELLED", (await tania.GetAsync($"/api/groups/{groupId}")).GetProperty("status").GetString());
+
+        await max.DeleteAsync($"/api/groups/{groupId}");
+        using var gone = await tania.SendRawAsync(HttpMethod.Get, $"/api/groups/{groupId}");
+        await ProblemAsync(gone, HttpStatusCode.NotFound);
+        Assert.Empty((await tania.GetAsync("/api/groups")).EnumerateArray());
     }
 
     [Fact]

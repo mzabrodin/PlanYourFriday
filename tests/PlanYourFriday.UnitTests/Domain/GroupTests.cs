@@ -300,6 +300,20 @@ public class GroupTests
     }
 
     [Fact]
+    public void Cancel_DuringVoting_DropsTheOptions()
+    {
+        var group = CreateGroup();
+        group.StartVoting([Range(3, 18, 21)], null, Now);
+
+        group.Cancel();
+
+        Assert.Equal(GroupStatus.Cancelled, group.Status);
+        Assert.Empty(group.Options);
+        var exception = Assert.Throws<InvalidStateException>(group.Cancel);
+        Assert.Equal("group.already_cancelled", exception.Code);
+    }
+
+    [Fact]
     public void Cancel_RejectsScheduledGroup()
     {
         var group = CreateGroup();
@@ -310,7 +324,7 @@ public class GroupTests
     }
 
     [Fact]
-    public void CancelEvent_CancelsEventReopensPlanningAndQueuesCalendarResync()
+    public void CancelEvent_CancelsEventAndGroupAndQueuesCalendarResync()
     {
         var group = CreateGroup();
         var @event = group.ScheduleEvent("Event", null, Range(3, 18, 21), null, null, Now);
@@ -321,7 +335,7 @@ public class GroupTests
         group.CancelEvent(@event);
 
         Assert.Equal(EventStatus.Cancelled, @event.Status);
-        Assert.Equal(GroupStatus.Planning, group.Status);
+        Assert.Equal(GroupStatus.Cancelled, group.Status);
         Assert.Equal(SyncStatus.Pending, link.SyncStatus);
         Assert.Equal("google-event-id", link.ExternalEventId);
     }

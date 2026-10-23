@@ -26,7 +26,13 @@ public class WorkerTests(ApiFactory api) : ApiTest(api)
         using var scope = Api.Services.CreateScope();
         var types = scope.ServiceProvider.GetServices<IOutboxHandler>().Select(h => h.Type).ToList();
 
-        string[] expected = [InvitationEmailRequested.Type, NotificationEmailRequested.Type, EventReminderEmailRequested.Type];
+        string[] expected =
+        [
+            InvitationEmailRequested.Type,
+            NotificationEmailRequested.Type,
+            EventReminderEmailRequested.Type,
+            CalendarEventRemovalRequested.Type,
+        ];
         Assert.Equal(expected.Order(), types.Order());
         Assert.NotNull(scope.ServiceProvider.GetRequiredService<ReminderService>());
         Assert.NotNull(scope.ServiceProvider.GetRequiredService<PollService>());
@@ -104,5 +110,26 @@ public class WorkerTests(ApiFactory api) : ApiTest(api)
                 Arg.Any<CancellationToken>());
         var reloaded = await max.GetAsync($"/api/groups/{groupId}");
         Assert.Equal("SYNCED", reloaded.GetProperty("event").GetProperty("myCalendarSync").GetString());
+    }
+
+    [Fact]
+    public async Task DeletingACancelledGroup_StillRemovesTheEventFromCalendars()
+    {
+        var max = await SignInAsync("Max");
+        await ConnectCalendarAsync(max);
+        Api.Calendar.SaveEventAsync(
+                Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<ExternalEvent>(), Arg.Any<CancellationToken>())
+            .Returns("google-event-id");
+        var group = await max.PostAsync("/api/groups", new { title = "Board games", window = Range(9, 23), eventDurationMinutes = 120 });
+        var groupId = group.GetProperty("id").GetString();
+        await max.PostAsync($"/api/groups/{groupId}/event", new { title = "Board games", time = Range(18, 20), location = "Max's place" });
+        await RunAsync<CalendarSyncService>(s => s.SyncPendingAsync(CancellationToken.None));
+
+        // Deleted right after cancelling, before the calendar sync had a chance to remove the event.
+        await max.PostAsync($"/api/groups/{groupId}/cancel");
+        await max.DeleteAsync($"/api/groups/{groupId}");
+        await RunAsync<OutboxDispatcher>(d => d.DispatchDueAsync(CancellationToken.None));
+
+        await Api.Calendar.Received(1).DeleteEventAsync("access", "primary", "google-event-id", Arg.Any<CancellationToken>());
     }
 }

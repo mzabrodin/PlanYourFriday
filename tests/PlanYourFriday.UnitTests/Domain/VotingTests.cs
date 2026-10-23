@@ -124,16 +124,17 @@ public class VotingTests
     }
 
     [Fact]
-    public void CancelledEventGroupCanBeScheduledAgain()
+    public void CancelledEventGroupCannotBeScheduledAgain()
     {
         var group = CreateGroup();
         var first = group.ScheduleEvent("Friday", null, Range(2, 18, 20), null, null, Now);
         group.CancelEvent(first);
 
-        var second = group.ScheduleEvent("Friday", null, Range(2, 19, 21), null, null, Now);
+        var exception = Assert.Throws<InvalidStateException>(() =>
+            group.ScheduleEvent("Friday", null, Range(2, 19, 21), null, null, Now));
 
         Assert.Equal(EventStatus.Cancelled, first.Status);
-        Assert.Equal(EventStatus.Confirmed, second.Status);
+        Assert.Equal("group.not_planning", exception.Code);
     }
 
     [Fact]

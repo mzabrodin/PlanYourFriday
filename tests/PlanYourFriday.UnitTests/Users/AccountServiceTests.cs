@@ -1,5 +1,7 @@
 using PlanYourFriday.Application.Common;
+using PlanYourFriday.Application.Events;
 using PlanYourFriday.Application.Groups;
+using PlanYourFriday.Application.Outbox;
 using PlanYourFriday.Application.Users;
 using PlanYourFriday.Domain.Common;
 using PlanYourFriday.Domain.Users;
@@ -16,7 +18,15 @@ public class AccountServiceTests
 
     public AccountServiceTests()
     {
-        _service = new AccountService(_currentUser, _users, _groups, Substitute.For<IAccountQueries>(), _unitOfWork);
+        _service = new AccountService(
+            _currentUser,
+            _users,
+            _groups,
+            Substitute.For<IEventRepository>(),
+            Substitute.For<IAccountQueries>(),
+            Substitute.For<IOutbox>(),
+            _unitOfWork,
+            TimeProvider.System);
     }
 
     private User SignedInUser()

@@ -8,6 +8,8 @@ public interface IEventRepository
 
     Task<Event?> FindConfirmedByGroupAsync(Guid groupId, CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<Event>> ListByGroupAsync(Guid groupId, CancellationToken cancellationToken);
+
     Task<IReadOnlyList<Event>> ListNeedingSyncAsync(
         int max,
         DateTime retryFailedBefore,

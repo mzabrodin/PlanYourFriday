@@ -1,10 +1,13 @@
+using PlanYourFriday.Application.Calendar;
 using PlanYourFriday.Application.Common;
+using PlanYourFriday.Application.Events;
 using PlanYourFriday.Application.Friends;
 using PlanYourFriday.Application.Notifications;
 using PlanYourFriday.Application.Outbox;
 using PlanYourFriday.Application.Polls;
 using PlanYourFriday.Application.Users;
 using PlanYourFriday.Domain.Common;
+using PlanYourFriday.Domain.Events;
 using PlanYourFriday.Domain.Groups;
 using PlanYourFriday.Domain.Notifications;
 
@@ -15,6 +18,7 @@ public sealed class GroupService(
     AccountService account,
     IUserRepository users,
     IGroupRepository groups,
+    IEventRepository events,
     IGroupQueries queries,
     IFriendshipRepository friendships,
     IPollRepository polls,
@@ -213,6 +217,43 @@ public sealed class GroupService(
         var group = (await groups.GetByIdAsync(groupId, cancellationToken)).EnsureMember(currentUser.UserId);
         group.EnsureOrganizer(currentUser.UserId);
         group.CancelVoting();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>Cancels the plan in any stage. A confirmed event is cancelled too and leaves everyone's calendars.</summary>
+    public async Task CancelAsync(Guid groupId, CancellationToken cancellationToken)
+    {
+        var group = await GetAsMemberAsync(groupId, cancellationToken);
+        group.EnsureOrganizer(currentUser.UserId);
+        if (await events.FindConfirmedByGroupAsync(group.Id, cancellationToken) is { } @event)
+        {
+            group.CancelEvent(@event);
+        }
+        else
+        {
+            group.Cancel();
+        }
+
+        publisher.NotifyMembers(group, NotificationKind.EventCancelled, currentUser.UserId);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>Removes a cancelled or finished plan for everyone. Active plans have to be cancelled first.</summary>
+    public async Task DeleteAsync(Guid groupId, CancellationToken cancellationToken)
+    {
+        var group = await GetAsMemberAsync(groupId, cancellationToken);
+        group.EnsureOrganizer(currentUser.UserId);
+        var groupEvents = await events.ListByGroupAsync(group.Id, cancellationToken);
+        var confirmed = groupEvents.FirstOrDefault(e => e.Status == EventStatus.Confirmed);
+        var now = Now();
+        var over = group.Status == GroupStatus.Cancelled || (confirmed?.Time.End ?? group.Window.End) < now;
+        if (!over)
+        {
+            throw new InvalidStateException("group.delete_active", "Cancel the event before deleting it.");
+        }
+
+        CalendarEventRemovalRequested.QueueFor(outbox, groupEvents, now);
+        groups.Remove(group);
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 

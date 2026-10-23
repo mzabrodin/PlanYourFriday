@@ -1,6 +1,9 @@
+using PlanYourFriday.Application.Calendar;
 using PlanYourFriday.Application.Common;
+using PlanYourFriday.Application.Events;
 using PlanYourFriday.Application.Friends;
 using PlanYourFriday.Application.Groups;
+using PlanYourFriday.Application.Outbox;
 using PlanYourFriday.Domain.Common;
 using PlanYourFriday.Domain.Users;
 
@@ -10,8 +13,11 @@ public sealed class AccountService(
     ICurrentUser currentUser,
     IUserRepository users,
     IGroupRepository groups,
+    IEventRepository events,
     IAccountQueries queries,
-    IUnitOfWork unitOfWork)
+    IOutbox outbox,
+    IUnitOfWork unitOfWork,
+    TimeProvider timeProvider)
 {
     public async Task<User> GetAsync(CancellationToken cancellationToken)
     {
@@ -74,8 +80,11 @@ public sealed class AccountService(
     public async Task DeleteAsync(CancellationToken cancellationToken)
     {
         var user = await GetAsync(cancellationToken);
+        var now = timeProvider.GetUtcNow().UtcDateTime;
         foreach (var group in await groups.ListOrganizedByAsync(user.Id, cancellationToken))
         {
+            // The group's events go with it, so take their copies out of the members' calendars first.
+            CalendarEventRemovalRequested.QueueFor(outbox, await events.ListByGroupAsync(group.Id, cancellationToken), now);
             groups.Remove(group);
         }
 

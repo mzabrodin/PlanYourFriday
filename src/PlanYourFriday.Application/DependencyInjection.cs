@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IOutboxHandler, InvitationEmailHandler>();
         services.AddScoped<IOutboxHandler, NotificationEmailHandler>();
         services.AddScoped<IOutboxHandler, EventReminderEmailHandler>();
+        services.AddScoped<IOutboxHandler, CalendarEventRemovalHandler>();
 
         return services;
     }

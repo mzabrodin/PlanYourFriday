@@ -129,6 +129,20 @@ public sealed class GroupsController(GroupService groups) : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("{groupId:guid}/cancel")]
+    public async Task<IActionResult> Cancel(Guid groupId, CancellationToken cancellationToken)
+    {
+        await groups.CancelAsync(groupId, cancellationToken);
+        return NoContent();
+    }
+
+    [HttpDelete("{groupId:guid}")]
+    public async Task<IActionResult> Delete(Guid groupId, CancellationToken cancellationToken)
+    {
+        await groups.DeleteAsync(groupId, cancellationToken);
+        return NoContent();
+    }
+
     [HttpGet("{groupId:guid}/suggestions")]
     public Task<IReadOnlyList<SuggestedTimeView>> GetSuggestions(Guid groupId, CancellationToken cancellationToken)
     {

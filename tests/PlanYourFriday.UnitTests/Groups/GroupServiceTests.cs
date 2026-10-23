@@ -1,4 +1,6 @@
+using PlanYourFriday.Application.Calendar;
 using PlanYourFriday.Application.Common;
+using PlanYourFriday.Application.Events;
 using PlanYourFriday.Application.Friends;
 using PlanYourFriday.Application.Groups;
 using PlanYourFriday.Application.Notifications;
@@ -6,6 +8,7 @@ using PlanYourFriday.Application.Outbox;
 using PlanYourFriday.Application.Polls;
 using PlanYourFriday.Application.Users;
 using PlanYourFriday.Domain.Common;
+using PlanYourFriday.Domain.Events;
 using PlanYourFriday.Domain.Groups;
 using PlanYourFriday.Domain.Notifications;
 using PlanYourFriday.Domain.Polls;
@@ -20,6 +23,7 @@ public class GroupServiceTests
     private readonly ICurrentUser _currentUser = Substitute.For<ICurrentUser>();
     private readonly IUserRepository _users = Substitute.For<IUserRepository>();
     private readonly IGroupRepository _groups = Substitute.For<IGroupRepository>();
+    private readonly IEventRepository _events = Substitute.For<IEventRepository>();
     private readonly IGroupQueries _queries = Substitute.For<IGroupQueries>();
     private readonly IFriendshipRepository _friendships = Substitute.For<IFriendshipRepository>();
     private readonly IPollRepository _polls = Substitute.For<IPollRepository>();
@@ -48,9 +52,11 @@ public class GroupServiceTests
 
         _service = new GroupService(
             _currentUser,
-            new AccountService(_currentUser, _users, _groups, Substitute.For<IAccountQueries>(), _unitOfWork),
+            new AccountService(
+                _currentUser, _users, _groups, _events, Substitute.For<IAccountQueries>(), _outbox, _unitOfWork, Clock(1, 0)),
             _users,
             _groups,
+            _events,
             _queries,
             _friendships,
             _polls,
@@ -197,5 +203,68 @@ public class GroupServiceTests
 
         Assert.True(group.IsMember(_friend.Id));
         Assert.Equal(2, group.Members.Count);
+    }
+
+    [Fact]
+    public async Task Cancel_ScheduledGroup_CancelsTheEventAndTellsEveryone()
+    {
+        var group = CreateGroup();
+        group.AddMember(_friend.Id);
+        var @event = group.ScheduleEvent("Board games", null, Range(2, 18, 20), null, null, At(1, 0));
+        _events.FindConfirmedByGroupAsync(group.Id, Arg.Any<CancellationToken>()).Returns(@event);
+        SignIn(_organizer);
+
+        await _service.CancelAsync(group.Id, CancellationToken.None);
+
+        Assert.Equal(GroupStatus.Cancelled, group.Status);
+        Assert.Equal(EventStatus.Cancelled, @event.Status);
+        _notifications.Received(1)
+            .Add(Arg.Is<Notification>(n => n.UserId == _friend.Id && n.Kind == NotificationKind.EventCancelled));
+    }
+
+    [Fact]
+    public async Task Cancel_IsOnlyForTheOrganizer()
+    {
+        var group = CreateGroup();
+        group.AddMember(_friend.Id);
+        SignIn(_friend);
+
+        await Assert.ThrowsAsync<AccessDeniedException>(() => _service.CancelAsync(group.Id, CancellationToken.None));
+        Assert.Equal(GroupStatus.Planning, group.Status);
+    }
+
+    [Fact]
+    public async Task Delete_RejectsAnActivePlan()
+    {
+        var group = CreateGroup();
+        _events.ListByGroupAsync(group.Id, Arg.Any<CancellationToken>()).Returns([]);
+        SignIn(_organizer);
+
+        var exception = await Assert.ThrowsAsync<InvalidStateException>(() =>
+            _service.DeleteAsync(group.Id, CancellationToken.None));
+
+        Assert.Equal("group.delete_active", exception.Code);
+        _groups.DidNotReceive().Remove(Arg.Any<Group>());
+    }
+
+    [Fact]
+    public async Task Delete_RemovesACancelledGroupAndCleansUpCalendars()
+    {
+        var group = CreateGroup();
+        var @event = group.ScheduleEvent("Board games", null, Range(2, 18, 20), null, null, At(1, 0));
+        var synced = Guid.NewGuid();
+        @event.AddCalendarLink(synced);
+        @event.MarkSynced(synced, "google-id");
+        @event.AddCalendarLink(Guid.NewGuid());
+        group.CancelEvent(@event);
+        _events.ListByGroupAsync(group.Id, Arg.Any<CancellationToken>()).Returns([@event]);
+        SignIn(_organizer);
+
+        await _service.DeleteAsync(group.Id, CancellationToken.None);
+
+        _groups.Received(1).Remove(group);
+        _outbox.Received(1).Add(Arg.Is<OutboxMessage>(m =>
+            m.Type == CalendarEventRemovalRequested.Type && m.Payload.Contains("google-id", StringComparison.Ordinal)));
+        await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }

@@ -30,10 +30,15 @@ app.UseHttpLogging();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
+// Docker turns this off, the migrate container runs the migrations
+if (app.Configuration.GetValue("Database:MigrateOnStartup", app.Environment.IsDevelopment()))
+{
+    await app.Services.MigrateDatabaseAsync();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi().AllowAnonymous();
-    await app.Services.MigrateDatabaseAsync();
 }
 else
 {

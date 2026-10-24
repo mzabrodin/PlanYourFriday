@@ -31,7 +31,7 @@ flowchart LR
 ## Можливості
 
 | Розділ | Що там |
-|---|---|
+| --- | --- |
 | **Головна** | Найближча подія, «твій хід» (де чекають на тебе), план на 7 днів |
 | **Події** | Усі події з пошуком, вкладками за етапом (зокрема окремо минулі й скасовані), фільтром за роллю, сортуванням |
 | **Сторінка події** | Календар вільного часу, найкращі варіанти, голосування, деталі події, скасування й видалення, учасники й запрошення |
@@ -45,7 +45,7 @@ flowchart LR
 **Кольори означають етап**, однаково по всьому сайту:
 
 | Колір | Етап |
-|---|---|
+| --- | --- |
 | Синій | Збір вільного часу |
 | Фіолетовий | Голосування |
 | Зелений | Подію підтверджено |
@@ -66,7 +66,7 @@ flowchart LR
 ## Стек
 
 | Частина | Технології |
-|---|---|
+| --- | --- |
 | Frontend | React, TypeScript, Vite, React Router, TanStack Query, FullCalendar, Lucide |
 | Backend | C#, ASP.NET Core Web API, .NET Worker Service (.NET 10) |
 | База даних | PostgreSQL, Entity Framework Core |
@@ -90,12 +90,12 @@ npm run lint       # oxlint
 
 ```bash
 cp .env.example .env                              # лише перший раз
-docker compose up -d                              # PostgreSQL і Mailpit
+docker compose up -d postgres mailpit             # лише PostgreSQL і Mailpit
 dotnet run --project src/PlanYourFriday.Api       # http://localhost:5131, міграції застосовуються самі
 dotnet run --project src/PlanYourFriday.Worker    # листи, Google Calendar, нагадування
 ```
 
-Листи з локального запуску не йдуть назовні, а потрапляють у Mailpit: http://localhost:8025.
+Листи з локального запуску не йдуть назовні, а потрапляють у Mailpit: <http://localhost:8025>.
 
 **Без ключів Google** у режимі розробки замість Google відкривається форма тестового входу: вводиш будь-який email і заходиш. Так зручно перевіряти кількома «друзями» в різних браузерах.
 
@@ -113,9 +113,43 @@ dotnet user-secrets set "Authentication:Google:ClientSecret" "<client-secret>" -
 
 **Тести:** `dotnet test`. Інтеграційні тести (`tests/PlanYourFriday.IntegrationTests`) самі піднімають PostgreSQL у Docker, тож Docker має бути запущений. Вони звіряють кожну відповідь API з типами SPA у `web/src/api/types.ts`, тому якщо фронтенд і бекенд розійдуться, тест це покаже.
 
+### Docker
+
+Увесь застосунок (SPA, API, Worker, PostgreSQL, Mailpit) запускається однією командою, без .NET і Node.js на машині. Потрібен лише Docker.
+
+**1. Google Cloud** (якщо потрібен вхід через Google; без нього працює тестовий вхід). У тому ж OAuth client, що й вище, додайте ще два Authorized redirect URI:
+
+- `http://localhost:8080/api/auth/signin-google`;
+- `http://localhost:8080/api/calendar-connections/google/callback`.
+
+Поки OAuth consent screen у статусі Testing, додайте свій акаунт у **Test users**. JavaScript origins не потрібні: вхід відбувається на сервері.
+
+**2. `.env`.** Скопіюйте `cp .env.example .env` і впишіть ключі Google. user-secrets у контейнер не потрапляють, тож значення ті самі, що там (`dotnet user-secrets list --project src/PlanYourFriday.Api`).
+
+| Змінна | За замовчуванням | Що це |
+| --- | --- | --- |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | порожні | ключі OAuth; порожні означає тестовий вхід |
+| `APP_PORT` | `8080` | порт сайту; якщо змінили, змініть і в redirect URI |
+| `APP_ENVIRONMENT` | `Development` | `Production` вимикає тестовий вхід (тоді ключі Google обов'язкові) |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_ENABLE_SSL`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM` | порожні | справжня пошта (приклад для Gmail у `.env.example`); порожні означає Mailpit. Хост, порт і SSL задавайте разом |
+| `POSTGRES_*` | `planyourfriday` | база даних; після першого запуску не змінюйте, або `docker compose down -v` |
+
+**3. Запуск:**
+
+```bash
+docker compose up -d --build   # http://localhost:8080, листи в http://localhost:8025
+docker compose down            # зупинити (дані лишаються; -v видаляє базу)
+```
+
+Після змін у `.env` достатньо `docker compose up -d`, після змін у коді потрібен `--build`.
+
+Сайт працює на `http://localhost:8080`. Якщо відкрити `http://127.0.0.1:8080` (так робить посилання на порт у Docker Desktop), nginx перенаправить на `localhost`: Google приймає лише зареєстровані redirect URI з `localhost`, а cookie входу прив'язана до хоста.
+
+Порядок запуску як у production: PostgreSQL → `migrate` (застосовує міграції й завершується, тож у `docker compose ps -a` він `Exited (0)`) → API і Worker → SPA.
+
 ## Структура
 
-```
+```text
 PlanYourFriday/
 ├── web/                              SPA
 ├── src/
@@ -132,7 +166,7 @@ PlanYourFriday/
 ## Команда
 
 | | Роль | Зона відповідальності |
-|---|---|---|
+| --- | --- | --- |
 | **Бублик Світлана** | Business Analyst, Frontend Engineer | C4 та UML-діаграми, SPA |
 | **Забродін Максим** | Backend Engineer, DevOps Engineer | API, сервіси подій, запрошень і пошуку часу, схема БД, розгортання |
 | **Хаймик Тетяна** | Backend Engineer, QA Engineer | Google OAuth і Calendar, Worker та outbox, SMTP, тести |

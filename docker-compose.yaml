@@ -1,10 +1,17 @@
-# Local development dependencies. Api and Worker run on the host (IDE or `dotnet run`).
-#   cp .env.example .env     first time only, then adjust values if needed
-#   docker compose up -d     start
-#   docker compose down      stop (data is kept)
-#   docker compose down -v   stop and delete the database
+# Local stack. Setup (Google, .env): README.md, section "Docker"
+# Whole app in containers:
+#   docker compose up -d --build             http://localhost:8080, Mailpit at http://localhost:8025
+#   docker compose down                      stop (data is kept)
+#   docker compose down -v                   stop and delete the database
+#
+# Start order: postgres -> migrate (applies migrations, then exits; `ps -a` shows "Exited (0)") -> api and worker -> web.
+#
+# Dependencies only, when Api and Worker run on the host (IDE or `dotnet run`):
+#   docker compose up -d postgres mailpit
 #
 # Ports are bound to 127.0.0.1 so the services are reachable only from this machine.
+# Networks: web reaches only api (frontend); postgres and mailpit are reachable only from
+# api, worker and migrate (backend). Published ports still work from the host.
 
 name: planyourfriday
 
@@ -20,6 +27,22 @@ x-service: &service
   logging: *default-logging
   restart: unless-stopped
 
+# Shared by api and worker; user-secrets do not reach containers, so Google keys come from .env
+x-backend-env: &backend-env
+  ASPNETCORE_ENVIRONMENT: ${APP_ENVIRONMENT:-Development}
+  DOTNET_ENVIRONMENT: ${APP_ENVIRONMENT:-Development}
+  ConnectionStrings__Database: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+  App__PublicUrl: http://localhost:${APP_PORT:-8080}
+  # Mailpit unless .env points at a real SMTP server
+  Smtp__Host: ${SMTP_HOST:-mailpit}
+  Smtp__Port: ${SMTP_PORT:-1025}
+  Smtp__EnableSsl: ${SMTP_ENABLE_SSL:-false}
+  Smtp__UserName: ${SMTP_USERNAME:-}
+  Smtp__Password: ${SMTP_PASSWORD:-}
+  Smtp__From: ${SMTP_FROM:-PlanYourFriday <no-reply@planyourfriday.local>}
+  Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+  Authentication__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
+
 services:
   postgres:
     <<: *service
@@ -32,6 +55,7 @@ services:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql
+    networks: [backend]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -47,6 +71,75 @@ services:
     ports:
       - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
       - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+    networks: [backend]
+
+  # One-off: applies EF migrations and exits
+  migrate:
+    <<: *service
+    restart: "no"
+    image: planyourfriday/migrate:local
+    build:
+      context: .
+      dockerfile: src/PlanYourFriday.Api/Dockerfile
+      target: migrate
+    environment:
+      DOTNET_ENVIRONMENT: ${APP_ENVIRONMENT:-Development}
+      ConnectionStrings__Database: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+    networks: [backend]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *service
+    image: planyourfriday/api:local
+    build:
+      context: .
+      dockerfile: src/PlanYourFriday.Api/Dockerfile
+    environment:
+      <<: *backend-env
+      Database__MigrateOnStartup: "false"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+    networks: [frontend, backend]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+
+  worker:
+    <<: *service
+    image: planyourfriday/worker:local
+    build:
+      context: .
+      dockerfile: src/PlanYourFriday.Worker/Dockerfile
+    environment: *backend-env
+    networks: [backend]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    <<: *service
+    image: planyourfriday/web:local
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:80"
+    networks: [frontend]
+    depends_on:
+      api:
+        condition: service_healthy
+
+networks:
+  frontend:
+  backend:
 
 volumes:
   postgres-data:

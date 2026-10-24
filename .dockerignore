@@ -1,0 +1,15 @@
+# Images are built from the repository root; keep the context small and free of local state
+**/bin/
+**/obj/
+**/node_modules/
+web/dist/
+# Local overrides such as web/.env.local must not leak into image builds
+**/*.local
+tests/
+TestResults/
+.git/
+.github/
+.vs/
+.idea/
+*.user
+.env

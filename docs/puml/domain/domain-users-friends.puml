@@ -1,0 +1,142 @@
+@startuml domain-users-friends
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Users" {
+  class User <<aggregate root>> {
+    -Email : string
+    -DisplayName : string
+    -Username : string
+    -FriendCode : string
+    -PhotoUrl : string?
+    -TimeZone : string
+    -SessionVersion : int
+    -Settings : UserSettings
+    --
+    +{static} Create(email, displayName, timeZone, provider, subject) : User
+    +UpdateProfile(displayName, timeZone) : void
+    +ChangeUsername(username) : void
+    +SetPhotoUrl(photoUrl) : void
+    +RegenerateFriendCode() : void
+    +UpdateSettings(settings) : void
+    +EndAllSessions() : void
+    +AddIdentity(provider, subject) : UserIdentity
+    +ConnectCalendar(provider, externalAccountId, accountEmail,\n  calendarId, accessToken, refreshToken, expiresAt, scopes) : CalendarConnection
+    +DisconnectCalendar(connectionId) : void
+    +ChooseCalendars(connectionId, busyCalendarIds, writeCalendarId) : void
+    +UpdateCalendarTokens(connectionId, accessToken, refreshToken, expiresAt) : void
+    +MarkCalendarExpired(connectionId) : void
+    +MarkCalendarSynced(connectionId, now) : void
+    +FindPrimaryCalendar() : CalendarConnection?
+  }
+
+  class UserIdentity {
+    -Provider : AuthProvider
+    -Subject : string
+  }
+
+  class CalendarConnection {
+    -Provider : CalendarProvider
+    -ExternalAccountId : string
+    -AccountEmail : string
+    -CalendarId : string
+    -BusyCalendarIds : string[]
+    -AccessToken : string
+    -RefreshToken : string
+    -TokenExpiresAt : DateTime
+    -Scopes : string[]
+    -Status : ConnectionStatus
+    -IsPrimary : bool
+    -LastSyncedAt : DateTime?
+    --
+    +IsExpired(now) : bool
+  }
+
+  class UserSettings <<record>> {
+    +Theme : string
+    +TimeFormat : string
+    +WeekStartsOn : int
+    +DefaultEventDurationMinutes : int
+    +UsualFreeTime : UsualFreeTime
+    +Notifications : NotificationSettings
+  }
+
+  class UsualFreeTime <<record>> {
+    +Weekdays : DailyHours?
+    +Weekends : DailyHours?
+  }
+
+  class DailyHours <<record>> {
+    +Start : string
+    +End : string
+  }
+
+  class NotificationSettings <<record>> {
+    +Invitations : bool
+    +DeadlineReminders : bool
+    +EventConfirmed : bool
+    +EventCancelled : bool
+    +EventReminder : bool
+    +EventReminderHours : int
+  }
+
+  enum AuthProvider {
+    Google
+    Development
+  }
+
+  enum CalendarProvider {
+    Google
+  }
+
+  enum ConnectionStatus {
+    Active
+    Expired
+    Revoked
+  }
+}
+
+package "Friends" {
+  class Friendship <<aggregate root>> {
+    -UserLowId : Guid
+    -UserHighId : Guid
+    -RequesterId : Guid
+    -Status : FriendshipStatus
+    -AcceptedAt : DateTime?
+    --
+    +AddresseeId : Guid
+    +IsAccepted : bool
+    +{static} Request(requesterId, addresseeId) : Friendship
+    +{static} Befriend(requesterId, addresseeId, now) : Friendship
+    +Involves(userId) : bool
+    +OtherThan(userId) : Guid
+    +Accept(userId, now) : void
+    +AcceptByFriendCode(now) : void
+  }
+
+  enum FriendshipStatus {
+    Pending
+    Accepted
+  }
+}
+
+User "1" *-- "1..*" UserIdentity
+User "1" *-- "0..*" CalendarConnection
+User *-- "1" UserSettings
+UserSettings *-- UsualFreeTime
+UsualFreeTime *-- "0..2" DailyHours
+UserSettings *-- NotificationSettings
+UserIdentity --> AuthProvider
+CalendarConnection --> CalendarProvider
+CalendarConnection --> ConnectionStatus
+
+User "2" <-- "0..*" Friendship : by Id
+Friendship --> FriendshipStatus
+
+@enduml

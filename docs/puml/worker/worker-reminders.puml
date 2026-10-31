@@ -1,0 +1,89 @@
+@startuml worker-reminders
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Worker" {
+  abstract class PeriodicJob {
+    #{abstract} RunOnceAsync(services) : int
+  }
+
+  class ReminderJob {
+    interval = 1 min
+  }
+}
+
+package "Application" {
+  class ReminderService {
+    +RemindAboutDeadlinesAsync() : int
+    +RemindAboutEventsAsync() : int
+  }
+
+  class PollService {
+    +AnnounceClosedAsync() : int
+  }
+
+  class NotificationPublisher {
+    +Notify(userIds, kind, groupId, actorId) : void
+  }
+
+  interface IGroupRepository {
+    +GetByIdAsync(id) : Group?
+    +ListWithDeadlineBetweenAsync(from, to) : List<Group>
+  }
+
+  interface IEventRepository {
+    +ListStartingBetweenAsync(from, to) : List<Event>
+  }
+
+  interface IUserRepository {
+    +ListByIdsAsync(ids) : List<User>
+  }
+
+  interface INotificationRepository {
+    +ExistsAsync(userId, groupId, kind) : bool
+  }
+
+  interface IOutbox {
+    +Add(message) : void
+  }
+
+  interface IUnitOfWork {
+    +SaveChangesAsync() : int
+  }
+}
+
+package "Infrastructure" {
+  class GroupRepository
+  class EventRepository
+  class UserRepository
+  class NotificationRepository
+  class OutboxWriter
+  class AppDbContext
+}
+
+PeriodicJob <|-- ReminderJob
+ReminderJob --> ReminderService
+ReminderJob --> PollService
+
+ReminderService --> IGroupRepository
+ReminderService --> IEventRepository
+ReminderService --> IUserRepository
+ReminderService --> INotificationRepository
+ReminderService --> NotificationPublisher : DeadlineSoon
+ReminderService --> IOutbox : EventReminderEmailRequested
+ReminderService --> IUnitOfWork
+
+IGroupRepository <|.. GroupRepository
+IEventRepository <|.. EventRepository
+IUserRepository <|.. UserRepository
+INotificationRepository <|.. NotificationRepository
+IOutbox <|.. OutboxWriter
+IUnitOfWork <|.. AppDbContext
+
+@enduml

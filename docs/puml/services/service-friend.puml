@@ -1,0 +1,88 @@
+@startuml service-friend
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Api" {
+  class FriendsController {
+    +GetOverview() : FriendsOverviewView
+    +Search(q) : List<PersonView>
+    +GetByCode(code) : PersonView
+    +AddByCode(code) : PersonView
+    +SendRequest(request) : PersonView
+    +AcceptRequest(requestId) : void
+    +RemoveRequest(requestId) : void
+    +RemoveFriend(userId) : void
+  }
+}
+
+package "Application" {
+  class FriendService {
+    +GetOverviewAsync() : FriendsOverviewView
+    +SearchAsync(query) : List<PersonView>
+    +GetByFriendCodeAsync(code) : PersonView
+    +AddByFriendCodeAsync(code) : PersonView
+    +SendRequestAsync(otherId) : PersonView
+    +AcceptAsync(requestId) : void
+    +RemoveRequestAsync(requestId) : void
+    +RemoveFriendAsync(friendId) : void
+  }
+
+  class NotificationPublisher {
+    +NotifyFriend(userId, kind, actorId) : void
+  }
+
+  interface ICurrentUser {
+    +UserId : Guid
+  }
+
+  interface IUserRepository {
+    +GetByIdAsync(id) : User?
+    +FindByFriendCodeAsync(friendCode) : User?
+  }
+
+  interface IFriendshipRepository {
+    +GetByIdAsync(id) : Friendship?
+    +FindBetweenAsync(userId, otherId) : Friendship?
+    +Add(friendship) : void
+    +Remove(friendship) : void
+  }
+
+  interface IFriendQueries {
+    +GetOverviewAsync(userId) : FriendsOverviewView
+    +SearchAsync(userId, query) : List<PersonView>
+    +GetPersonAsync(userId, otherId) : PersonView?
+  }
+
+  interface IUnitOfWork {
+    +SaveChangesAsync() : int
+  }
+}
+
+package "Infrastructure" {
+  class UserRepository
+  class FriendshipRepository
+  class FriendQueries
+  class AppDbContext
+}
+
+FriendsController --> FriendService
+
+FriendService --> ICurrentUser
+FriendService --> IUserRepository
+FriendService --> IFriendshipRepository
+FriendService --> IFriendQueries
+FriendService --> NotificationPublisher : FriendRequest,\nFriendAccepted
+FriendService --> IUnitOfWork
+
+IUserRepository <|.. UserRepository
+IFriendshipRepository <|.. FriendshipRepository
+IFriendQueries <|.. FriendQueries
+IUnitOfWork <|.. AppDbContext
+
+@enduml

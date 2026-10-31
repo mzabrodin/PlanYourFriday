@@ -1,0 +1,140 @@
+@startuml service-group
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Api" {
+  class GroupsController {
+    +List() : List<GroupSummaryView>
+    +Get(groupId) : GroupView
+    +Create(request) : GroupView
+    +Join(inviteToken) : JoinGroupView
+    +Invite(groupId, request) : void
+    +AddMembers(groupId, request) : void
+    +RevokeInvitation(invitationId) : void
+    +GetAvailability(groupId) : List<MemberAvailabilityView>
+    +UpdateAvailability(groupId, request) : void
+    +GetOptimalSlots(groupId) : List<TimeRangeView>
+    +GetSuggestions(groupId) : List<SuggestedTimeView>
+    +StartVoting(groupId, request) : void
+    +Vote(groupId, optionId, request) : void
+    +CancelVoting(groupId) : void
+    +Cancel(groupId) : void
+    +Delete(groupId) : void
+  }
+}
+
+package "Application" {
+  class GroupService {
+    +ListAsync() : List<GroupSummaryView>
+    +GetAsync(groupId) : GroupView
+    +CreateAsync(draft : GroupDraft) : GroupView
+    +JoinAsync(inviteToken) : JoinGroupView
+    +InviteAsync(groupId, emails) : void
+    +AddMembersAsync(groupId, userIds) : void
+    +RevokeInvitationAsync(invitationId) : void
+    +GetAvailabilityAsync(groupId) : List<MemberAvailabilityView>
+    +SetAvailabilityAsync(groupId, slots) : void
+    +GetOptimalSlotsAsync(groupId) : List<TimeRangeView>
+    +GetSuggestionsAsync(groupId) : List<SuggestedTimeView>
+    +StartVotingAsync(groupId, options, deadline) : void
+    +VoteAsync(groupId, optionId, answer) : void
+    +CancelVotingAsync(groupId) : void
+    +CancelAsync(groupId) : void
+    +DeleteAsync(groupId) : void
+  }
+
+  class AccountService {
+    +GetAsync() : User
+  }
+
+  class NotificationPublisher {
+    +Notify(userIds, kind, groupId, actorId) : void
+    +NotifyMembers(group, kind, actorId) : void
+    +NotifyInApp(userId, kind, groupId, actorId) : void
+  }
+
+  interface ICurrentUser {
+    +UserId : Guid
+  }
+
+  interface IGroupRepository {
+    +GetByIdAsync(id) : Group?
+    +FindByInviteTokenAsync(inviteToken) : Group?
+    +FindByInvitationIdAsync(invitationId) : Group?
+    +Add(group) : void
+    +Remove(group) : void
+  }
+
+  interface IGroupQueries {
+    +ListAsync(userId) : List<GroupSummaryView>
+    +GetAsync(groupId, userId) : GroupView?
+    +GetMemberAsync(groupId, userId) : MemberView?
+  }
+
+  interface IUserRepository {
+    +FindByEmailAsync(email) : User?
+  }
+
+  interface IEventRepository {
+    +FindConfirmedByGroupAsync(groupId) : Event?
+    +ListByGroupAsync(groupId) : List<Event>
+  }
+
+  interface IFriendshipRepository {
+    +ListFriendIdsAsync(userId) : Set<Guid>
+  }
+
+  interface IPollRepository {
+    +GetByIdAsync(id) : Poll?
+  }
+
+  interface IOutbox {
+    +Add(message) : void
+  }
+
+  interface IUnitOfWork {
+    +SaveChangesAsync() : int
+  }
+}
+
+package "Infrastructure" {
+  class GroupRepository
+  class GroupQueries
+  class UserRepository
+  class EventRepository
+  class FriendshipRepository
+  class PollRepository
+  class OutboxWriter
+  class AppDbContext
+}
+
+GroupsController --> GroupService
+
+GroupService --> ICurrentUser
+GroupService --> AccountService
+GroupService --> IGroupRepository
+GroupService --> IGroupQueries
+GroupService --> IUserRepository
+GroupService --> IEventRepository
+GroupService --> IFriendshipRepository
+GroupService --> IPollRepository
+GroupService --> IOutbox : InvitationEmailRequested,\nCalendarEventRemovalRequested
+GroupService --> NotificationPublisher
+GroupService --> IUnitOfWork
+
+IGroupRepository <|.. GroupRepository
+IGroupQueries <|.. GroupQueries
+IUserRepository <|.. UserRepository
+IEventRepository <|.. EventRepository
+IFriendshipRepository <|.. FriendshipRepository
+IPollRepository <|.. PollRepository
+IOutbox <|.. OutboxWriter
+IUnitOfWork <|.. AppDbContext
+
+@enduml

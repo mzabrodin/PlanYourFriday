@@ -1,0 +1,41 @@
+@startuml service-calendar
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Api" {
+  class CalendarController {
+    +Get(from, to) : List<CalendarItemView>
+  }
+}
+
+package "Application" {
+  class CalendarService {
+    +GetAsync(range : TimeRange) : List<CalendarItemView>
+  }
+
+  interface ICurrentUser {
+    +UserId : Guid
+  }
+
+  interface ICalendarQueries {
+    +GetAsync(userId, from, to) : List<CalendarItemView>
+  }
+}
+
+package "Infrastructure" {
+  class GroupQueries
+}
+
+CalendarController --> CalendarService
+CalendarService --> ICurrentUser
+CalendarService --> ICalendarQueries
+
+ICalendarQueries <|.. GroupQueries
+
+@enduml

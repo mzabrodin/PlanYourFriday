@@ -1,0 +1,49 @@
+@startuml domain-notifications
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+class Notification <<aggregate root>> {
+  -UserId : Guid
+  -Kind : NotificationKind
+  -ActorId : Guid?
+  -GroupId : Guid?
+  -PollId : Guid?
+  -ReadAt : DateTime?
+  --
+  +{static} ForGroup(userId, kind, groupId, actorId) : Notification
+  +{static} ForPoll(userId, kind, pollId, actorId) : Notification
+  +{static} ForFriend(userId, kind, actorId) : Notification
+  +MarkRead(now) : void
+}
+
+enum NotificationKind {
+  Invited
+  MemberJoined
+  VotingStarted
+  DeadlineSoon
+  EventConfirmed
+  EventUpdated
+  EventCancelled
+  FriendRequest
+  FriendAccepted
+  PollStarted
+  PollClosed
+}
+
+class User
+class Group
+class Poll
+
+Notification --> NotificationKind
+Notification "0..*" --> "1" User : UserId
+Notification "0..*" --> "0..1" User : ActorId
+Notification "0..*" --> "0..1" Group : GroupId
+Notification "0..*" --> "0..1" Poll : PollId
+
+@enduml

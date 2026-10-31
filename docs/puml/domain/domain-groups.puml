@@ -1,0 +1,141 @@
+@startuml domain-groups
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Groups" {
+  class Group <<aggregate root>> {
+    -OrganizerId : Guid
+    -Title : string
+    -Description : string?
+    -InviteToken : string
+    -Window : TimeRange
+    -EventDuration : TimeSpan
+    -AvailabilityDeadline : DateTime?
+    -VotingDeadline : DateTime?
+    -Status : GroupStatus
+    --
+    +{static} Create(organizerId, title, description, window,\n  eventDuration, availabilityDeadline, now) : Group
+    +IsOrganizer(userId) : bool
+    +IsMember(userId) : bool
+    +EnsureOrganizer(userId) : void
+    +AddMember(userId) : GroupMember
+    +RemoveMember(userId) : void
+    +Invite(email) : Invitation
+    +AcceptInvitation(invitationId, userId) : GroupMember
+    +MarkInvitationSent(invitationId) : void
+    +RevokeInvitation(invitationId) : void
+    +RegenerateInviteToken() : void
+    +CanEditAvailability(now) : bool
+    +SetAvailability(userId, slots, now) : void
+    +FindCommonSlots() : List<TimeRange>
+    +SuggestTimes(now, max = 6) : List<SuggestedTime>
+    +StartVoting(options, deadline, now) : void
+    +Vote(userId, optionId, answer, now) : void
+    +CancelVoting() : void
+    +ScheduleEvent(title, description, time, location, meetingLink, now) : Event
+    +Cancel() : void
+    +CancelEvent(event) : void
+    +MarkEventReminderSent(userId, eventId) : void
+  }
+
+  class GroupMember {
+    -GroupId : Guid
+    -UserId : Guid
+    -Role : MemberRole
+    -RemindedEventId : Guid?
+  }
+
+  class AvailabilitySlot {
+    -Id : long
+    -Slot : TimeRange
+  }
+
+  class Invitation {
+    -GroupId : Guid
+    -Email : string
+    -Status : InvitationStatus
+    -AcceptedByUserId : Guid?
+  }
+
+  class TimeOption {
+    -GroupId : Guid
+    -Time : TimeRange
+    -FreeUserIds : Guid[]
+  }
+
+  class OptionVote {
+    -OptionId : Guid
+    -UserId : Guid
+    -Answer : VoteAnswer
+  }
+
+  class SuggestedTime <<record>> {
+    +Time : TimeRange
+    +FreeUserIds : List<Guid>
+  }
+
+  enum GroupStatus {
+    Planning
+    Voting
+    Scheduled
+    Cancelled
+  }
+
+  enum MemberRole {
+    Organizer
+    Participant
+  }
+
+  enum InvitationStatus {
+    Pending
+    Sent
+    Accepted
+    Revoked
+  }
+
+  enum VoteAnswer {
+    Yes
+    Maybe
+    No
+  }
+}
+
+package "Common" {
+  class TimeRange <<value object>> {
+    +Start : DateTime
+    +End : DateTime
+    +Duration : TimeSpan
+    +Overlaps(other) : bool
+    +Contains(other) : bool
+    +Intersect(other) : TimeRange?
+  }
+}
+
+package "Events" {
+  class Event
+}
+
+Group "1" *-- "1..*" GroupMember
+Group "1" *-- "0..*" Invitation
+Group "1" *-- "0..6" TimeOption
+GroupMember "1" *-- "0..*" AvailabilitySlot
+TimeOption "1" *-- "0..*" OptionVote
+Group ..> SuggestedTime : creates
+Group ..> Event : ScheduleEvent()
+
+Group --> GroupStatus
+GroupMember --> MemberRole
+Invitation --> InvitationStatus
+OptionVote --> VoteAnswer
+
+Group ..> TimeRange
+AvailabilitySlot ..> TimeRange
+TimeOption ..> TimeRange
+
+@enduml

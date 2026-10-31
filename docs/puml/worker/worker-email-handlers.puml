@@ -1,0 +1,110 @@
+@startuml worker-email-handlers
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Application" {
+  interface IOutboxHandler {
+    +Type : string
+    +HandleAsync(payload) : void
+  }
+
+  class InvitationEmailHandler {
+    +Type = "invitation.email_requested"
+    +HandleAsync(payload) : void
+  }
+
+  class NotificationEmailHandler {
+    +Type = "notification.email_requested"
+    +HandleAsync(payload) : void
+  }
+
+  class EventReminderEmailHandler {
+    +Type = "event.reminder_email_requested"
+    +HandleAsync(payload) : void
+  }
+
+  class InvitationEmailRequested <<record>> {
+    +GroupId : Guid
+    +InvitationId : Guid
+  }
+
+  class NotificationEmailRequested <<record>> {
+    +NotificationId : Guid
+  }
+
+  class EventReminderEmailRequested <<record>> {
+    +EventId : Guid
+    +UserId : Guid
+  }
+
+  class NotificationEmail <<static>> {
+    +IsWanted(settings, kind) : bool
+    +Compose(...) : EmailMessage
+    +ComposeReminder(event, timeZoneId, link) : EmailMessage
+  }
+
+  interface IGroupRepository {
+    +GetByIdAsync(id) : Group?
+  }
+
+  interface IUserRepository {
+    +GetByIdAsync(id) : User?
+  }
+
+  interface IEventRepository {
+    +GetByIdAsync(id) : Event?
+    +FindConfirmedByGroupAsync(groupId) : Event?
+  }
+
+  interface INotificationRepository {
+    +GetByIdAsync(id) : Notification?
+  }
+
+  interface IEmailSender {
+    +SendAsync(to, message : EmailMessage) : void
+  }
+}
+
+package "Infrastructure" {
+  class GroupRepository
+  class UserRepository
+  class EventRepository
+  class NotificationRepository
+  class SmtpEmailSender
+}
+
+IOutboxHandler <|.. InvitationEmailHandler
+IOutboxHandler <|.. NotificationEmailHandler
+IOutboxHandler <|.. EventReminderEmailHandler
+
+InvitationEmailHandler ..> InvitationEmailRequested
+NotificationEmailHandler ..> NotificationEmailRequested
+EventReminderEmailHandler ..> EventReminderEmailRequested
+NotificationEmailHandler ..> NotificationEmail
+EventReminderEmailHandler ..> NotificationEmail
+
+InvitationEmailHandler --> IGroupRepository
+InvitationEmailHandler --> IUserRepository
+InvitationEmailHandler --> IEmailSender
+NotificationEmailHandler --> INotificationRepository
+NotificationEmailHandler --> IUserRepository
+NotificationEmailHandler --> IGroupRepository
+NotificationEmailHandler --> IEventRepository
+NotificationEmailHandler --> IEmailSender
+EventReminderEmailHandler --> IEventRepository
+EventReminderEmailHandler --> IUserRepository
+EventReminderEmailHandler --> IEmailSender
+
+IGroupRepository <|.. GroupRepository
+IUserRepository <|.. UserRepository
+IEventRepository <|.. EventRepository
+INotificationRepository <|.. NotificationRepository
+IEmailSender <|.. SmtpEmailSender
+
+@enduml

@@ -1,0 +1,90 @@
+@startuml service-poll
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Api" {
+  class PollsController {
+    +List() : List<PollSummaryView>
+    +Get(pollId) : PollView
+    +Create(request) : PollView
+    +AddOption(pollId, request) : PollView
+    +Vote(pollId, request) : PollView
+    +Close(pollId) : PollView
+    +Delete(pollId) : void
+  }
+}
+
+package "Worker" {
+  class ReminderJob
+}
+
+package "Application" {
+  class PollService {
+    +ListAsync() : List<PollSummaryView>
+    +GetAsync(pollId) : PollView
+    +CreateAsync(draft : PollDraft) : PollView
+    +AddOptionAsync(pollId, title) : PollView
+    +VoteAsync(pollId, optionIds) : PollView
+    +CloseAsync(pollId) : PollView
+    +DeleteAsync(pollId) : void
+    +AnnounceClosedAsync() : int
+  }
+
+  class NotificationPublisher {
+    +NotifyParticipants(poll, kind, actorId) : void
+  }
+
+  interface ICurrentUser {
+    +UserId : Guid
+  }
+
+  interface IPollRepository {
+    +GetByIdAsync(id) : Poll?
+    +ListClosedUnannouncedAsync(now) : List<Poll>
+    +Add(poll) : void
+    +Remove(poll) : void
+  }
+
+  interface IPollQueries {
+    +ListAsync(userId, now) : List<PollSummaryView>
+    +GetAsync(pollId, userId, now) : PollView?
+  }
+
+  interface IFriendshipRepository {
+    +ListFriendIdsAsync(userId) : Set<Guid>
+  }
+
+  interface IUnitOfWork {
+    +SaveChangesAsync() : int
+  }
+}
+
+package "Infrastructure" {
+  class PollRepository
+  class PollQueries
+  class FriendshipRepository
+  class AppDbContext
+}
+
+PollsController --> PollService
+ReminderJob --> PollService : AnnounceClosedAsync
+
+PollService --> ICurrentUser
+PollService --> IPollRepository
+PollService --> IPollQueries
+PollService --> IFriendshipRepository
+PollService --> NotificationPublisher : PollStarted,\nPollClosed
+PollService --> IUnitOfWork
+
+IPollRepository <|.. PollRepository
+IPollQueries <|.. PollQueries
+IFriendshipRepository <|.. FriendshipRepository
+IUnitOfWork <|.. AppDbContext
+
+@enduml

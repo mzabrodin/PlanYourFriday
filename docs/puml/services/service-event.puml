@@ -1,0 +1,80 @@
+@startuml service-event
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Api" {
+  class EventsController {
+    +Confirm(groupId, request) : EventView
+    +Update(eventId, request) : EventView
+    +Cancel(eventId) : void
+  }
+}
+
+package "Application" {
+  class EventService {
+    +ConfirmAsync(groupId, details : EventDetails, time : TimeRange) : EventView
+    +UpdateAsync(eventId, details : EventDetails) : EventView
+    +CancelAsync(eventId) : void
+  }
+
+  class NotificationPublisher {
+    +NotifyMembers(group, kind, actorId) : void
+  }
+
+  interface ICurrentUser {
+    +UserId : Guid
+  }
+
+  interface IGroupRepository {
+    +GetByIdAsync(id) : Group?
+  }
+
+  interface IEventRepository {
+    +GetByIdAsync(id) : Event?
+    +Add(event) : void
+  }
+
+  interface IUserRepository {
+    +ListByIdsAsync(ids) : List<User>
+  }
+
+  interface IGroupQueries {
+    +GetEventAsync(eventId, userId) : EventView?
+  }
+
+  interface IUnitOfWork {
+    +SaveChangesAsync() : int
+  }
+}
+
+package "Infrastructure" {
+  class GroupRepository
+  class EventRepository
+  class UserRepository
+  class GroupQueries
+  class AppDbContext
+}
+
+EventsController --> EventService
+
+EventService --> ICurrentUser
+EventService --> IGroupRepository
+EventService --> IEventRepository
+EventService --> IUserRepository
+EventService --> IGroupQueries
+EventService --> NotificationPublisher : EventConfirmed,\nEventUpdated, EventCancelled
+EventService --> IUnitOfWork
+
+IGroupRepository <|.. GroupRepository
+IEventRepository <|.. EventRepository
+IUserRepository <|.. UserRepository
+IGroupQueries <|.. GroupQueries
+IUnitOfWork <|.. AppDbContext
+
+@enduml

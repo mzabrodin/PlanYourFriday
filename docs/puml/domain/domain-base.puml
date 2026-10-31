@@ -1,0 +1,89 @@
+@startuml domain-base
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+skinparam nodesep 20
+skinparam ranksep 50
+
+abstract class AuditableEntity {
+  +CreatedAt : DateTime
+  +UpdatedAt : DateTime
+}
+
+abstract class Entity {
+  +Id : Guid
+}
+
+package "Users" {
+  class User
+  class UserIdentity
+  class CalendarConnection
+}
+
+package "Friends" {
+  class Friendship
+}
+
+package "Groups" {
+  class Group
+  class Invitation
+  class TimeOption
+  class GroupMember
+  class OptionVote
+}
+
+package "Events" {
+  class Event
+  class CalendarEventLink
+}
+
+package "Polls" {
+  class Poll
+  class PollOption
+  class PollParticipant
+  class PollVote
+}
+
+package "Notifications" {
+  class Notification
+}
+
+package "Application" {
+  class OutboxMessage
+}
+
+AuditableEntity <|-- Entity
+
+Entity <|-- User
+Entity <|-- UserIdentity
+Entity <|-- CalendarConnection
+Entity <|-- Friendship
+Entity <|-- Group
+Entity <|-- Invitation
+Entity <|-- TimeOption
+Entity <|-- Event
+Entity <|-- CalendarEventLink
+Entity <|-- Poll
+Entity <|-- PollOption
+Entity <|-- Notification
+Entity <|-- OutboxMessage
+
+AuditableEntity <|-- GroupMember
+AuditableEntity <|-- OptionVote
+AuditableEntity <|-- PollParticipant
+AuditableEntity <|-- PollVote
+
+User -[hidden]down- UserIdentity
+UserIdentity -[hidden]down- CalendarConnection
+Group -[hidden]down- Invitation
+Invitation -[hidden]down- TimeOption
+GroupMember -[hidden]down- OptionVote
+Event -[hidden]down- CalendarEventLink
+Poll -[hidden]down- PollOption
+PollParticipant -[hidden]down- PollVote
+Friendship -[hidden]down- Notification
+Notification -[hidden]down- OutboxMessage
+
+@enduml

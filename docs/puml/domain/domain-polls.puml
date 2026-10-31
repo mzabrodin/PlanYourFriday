@@ -1,0 +1,67 @@
+@startuml domain-polls
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Polls" {
+  class Poll <<aggregate root>> {
+    -CreatorId : Guid
+    -Title : string
+    -Description : string?
+    -Deadline : DateTime?
+    -MultipleChoice : bool
+    -AllowNewOptions : bool
+    -ClosedAt : DateTime?
+    -ClosedNotified : bool
+    -GroupId : Guid?
+    --
+    +{static} Create(creatorId, title, description, participantIds,\n  options, deadline, multipleChoice, allowNewOptions, now) : Poll
+    +IsClosed(now) : bool
+    +IsParticipant(userId) : bool
+    +HasVoted(userId) : bool
+    +AddOption(userId, title, now) : PollOption
+    +Vote(userId, optionIds, now) : void
+    +Close(userId, now) : void
+    +Winners(now) : List<PollOption>
+    +LinkGroup(userId, groupId, now) : void
+    +MarkClosedNotified() : void
+  }
+
+  class PollParticipant {
+    -PollId : Guid
+    -UserId : Guid
+  }
+
+  class PollOption {
+    -PollId : Guid
+    -Title : string
+    -AddedById : Guid
+    -Position : int
+  }
+
+  class PollVote {
+    -OptionId : Guid
+    -UserId : Guid
+  }
+}
+
+package "Users" {
+  class User
+}
+
+package "Groups" {
+  class Group
+}
+
+Poll "1" *-- "2..*" PollParticipant
+Poll "1" *-- "2..12" PollOption
+PollOption "1" *-- "0..*" PollVote
+Poll "0..*" --> "1" User : CreatorId
+Poll "0..*" --> "0..1" Group : GroupId
+
+@enduml

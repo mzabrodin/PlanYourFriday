@@ -1,0 +1,78 @@
+@startuml worker-outbox-dispatcher
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Worker" {
+  abstract class PeriodicJob {
+    #{abstract} RunOnceAsync(services) : int
+  }
+
+  class OutboxJob {
+    interval = 5 s
+  }
+}
+
+package "Application" {
+  class OutboxDispatcher {
+    -BatchSize = 20
+    -MaxAttempts = 8
+    +DispatchDueAsync() : int
+  }
+
+  class OutboxMessage {
+    +Type : string
+    +Payload : string
+    +Attempts : int
+    +NextAttemptAt : DateTime?
+    +ProcessedAt : DateTime?
+    +MarkProcessed(now) : void
+    +ScheduleRetry(at) : void
+  }
+
+  interface IOutboxStore {
+    +ListDueAsync(max, now) : List<OutboxMessage>
+  }
+
+  interface IOutboxHandler {
+    +Type : string
+    +HandleAsync(payload) : void
+  }
+
+  interface IUnitOfWork {
+    +SaveChangesAsync() : int
+  }
+
+  class InvitationEmailHandler
+  class NotificationEmailHandler
+  class EventReminderEmailHandler
+  class CalendarEventRemovalHandler
+}
+
+package "Infrastructure" {
+  class OutboxStore
+  class AppDbContext
+}
+
+PeriodicJob <|-- OutboxJob
+OutboxJob --> OutboxDispatcher
+
+OutboxDispatcher --> IOutboxStore
+OutboxDispatcher --> "*" IOutboxHandler : by Type
+OutboxDispatcher --> IUnitOfWork
+OutboxDispatcher ..> OutboxMessage
+
+IOutboxHandler <|.. InvitationEmailHandler
+IOutboxHandler <|.. NotificationEmailHandler
+IOutboxHandler <|.. EventReminderEmailHandler
+IOutboxHandler <|.. CalendarEventRemovalHandler
+
+IOutboxStore <|.. OutboxStore
+IUnitOfWork <|.. AppDbContext
+
+@enduml

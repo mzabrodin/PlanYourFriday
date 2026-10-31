@@ -1,0 +1,69 @@
+@startuml domain-events
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Events" {
+  class Event <<aggregate root>> {
+    -GroupId : Guid
+    -OwnerId : Guid
+    -Title : string
+    -Description : string?
+    -Time : TimeRange
+    -Location : string?
+    -MeetingLink : string?
+    -Status : EventStatus
+    --
+    +AddCalendarLink(connectionId) : CalendarEventLink
+    +Update(title, description, location, meetingLink) : void
+    +MarkSynced(connectionId, externalEventId) : void
+    +MarkRemovedFromCalendar(connectionId) : void
+    +MarkSyncFailed(connectionId) : void
+  }
+
+  class CalendarEventLink {
+    -EventId : Guid
+    -ConnectionId : Guid
+    -ExternalEventId : string?
+    -SyncStatus : SyncStatus
+  }
+
+  enum EventStatus {
+    Confirmed
+    Cancelled
+  }
+
+  enum SyncStatus {
+    Pending
+    Synced
+    Failed
+  }
+}
+
+package "Groups" {
+  class Group
+}
+
+package "Users" {
+  class User
+  class CalendarConnection
+}
+
+package "Common" {
+  class TimeRange <<value object>>
+}
+
+Group "1" -- "0..1" Event : GroupId
+Event "0..*" --> "1" User : OwnerId
+Event "1" *-- "0..*" CalendarEventLink
+CalendarEventLink "0..*" --> "1" CalendarConnection : ConnectionId
+Event --> EventStatus
+CalendarEventLink --> SyncStatus
+Event ..> TimeRange
+
+@enduml

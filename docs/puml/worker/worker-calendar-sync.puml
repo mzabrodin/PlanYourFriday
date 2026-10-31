@@ -1,0 +1,86 @@
+@startuml worker-calendar-sync
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Worker" {
+  abstract class PeriodicJob {
+    #{abstract} RunOnceAsync(services) : int
+  }
+
+  class CalendarSyncJob {
+    interval = 15 s
+  }
+}
+
+package "Application" {
+  class CalendarSyncService {
+    -BatchSize = 20
+    -RetryFailedAfter = 15 min
+    +SyncPendingAsync() : int
+  }
+
+  class CalendarAccess {
+    +GetAccessTokenAsync(user, connection) : string
+  }
+
+  interface IEventRepository {
+    +ListNeedingSyncAsync(max, retryFailedBefore) : List<Event>
+  }
+
+  interface IUserRepository {
+    +FindByCalendarConnectionAsync(connectionId) : User?
+  }
+
+  interface IExternalCalendarClient {
+    +SaveEventAsync(accessToken, calendarId, externalEventId, event) : string
+    +DeleteEventAsync(accessToken, calendarId, externalEventId) : void
+  }
+
+  interface ICalendarTokenClient {
+    +RefreshTokenAsync(refreshToken) : RefreshedToken
+  }
+
+  interface ITokenProtector {
+    +Protect(token) : string
+    +Unprotect(protectedToken) : string
+  }
+
+  interface IUnitOfWork {
+    +SaveChangesAsync() : int
+  }
+}
+
+package "Infrastructure" {
+  class EventRepository
+  class UserRepository
+  class GoogleCalendarClient
+  class GoogleTokenClient
+  class DataProtectionTokenProtector
+  class AppDbContext
+}
+
+PeriodicJob <|-- CalendarSyncJob
+CalendarSyncJob --> CalendarSyncService
+
+CalendarSyncService --> IEventRepository
+CalendarSyncService --> IUserRepository
+CalendarSyncService --> CalendarAccess
+CalendarSyncService --> IExternalCalendarClient
+CalendarSyncService --> IUnitOfWork
+CalendarAccess --> ICalendarTokenClient
+CalendarAccess --> ITokenProtector
+
+IEventRepository <|.. EventRepository
+IUserRepository <|.. UserRepository
+IExternalCalendarClient <|.. GoogleCalendarClient
+ICalendarTokenClient <|.. GoogleTokenClient
+ITokenProtector <|.. DataProtectionTokenProtector
+IUnitOfWork <|.. AppDbContext
+
+@enduml

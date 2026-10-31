@@ -1,0 +1,70 @@
+@startuml worker-calendar-event-removal
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Application" {
+  interface IOutboxHandler {
+    +Type : string
+    +HandleAsync(payload) : void
+  }
+
+  class CalendarEventRemovalHandler {
+    +Type = "calendar.event_removal_requested"
+    +HandleAsync(payload) : void
+  }
+
+  class CalendarEventRemovalRequested <<record>> {
+    +ConnectionId : Guid
+    +ExternalEventId : string
+    +{static} QueueFor(outbox, events, now) : void
+  }
+
+  class CalendarAccess {
+    +GetAccessTokenAsync(user, connection) : string
+  }
+
+  interface IUserRepository {
+    +FindByCalendarConnectionAsync(connectionId) : User?
+  }
+
+  interface IExternalCalendarClient {
+    +DeleteEventAsync(accessToken, calendarId, externalEventId) : void
+  }
+
+  interface ICalendarTokenClient {
+    +RefreshTokenAsync(refreshToken) : RefreshedToken
+  }
+
+  interface ITokenProtector {
+    +Protect(token) : string
+    +Unprotect(protectedToken) : string
+  }
+}
+
+package "Infrastructure" {
+  class UserRepository
+  class GoogleCalendarClient
+  class GoogleTokenClient
+  class DataProtectionTokenProtector
+}
+
+IOutboxHandler <|.. CalendarEventRemovalHandler
+CalendarEventRemovalHandler ..> CalendarEventRemovalRequested
+CalendarEventRemovalHandler --> IUserRepository
+CalendarEventRemovalHandler --> CalendarAccess
+CalendarEventRemovalHandler --> IExternalCalendarClient
+CalendarAccess --> ICalendarTokenClient
+CalendarAccess --> ITokenProtector
+
+IUserRepository <|.. UserRepository
+IExternalCalendarClient <|.. GoogleCalendarClient
+ICalendarTokenClient <|.. GoogleTokenClient
+ITokenProtector <|.. DataProtectionTokenProtector
+
+@enduml

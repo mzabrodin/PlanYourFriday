@@ -1,0 +1,58 @@
+@startuml service-notification
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Api" {
+  class NotificationsController {
+    +List() : List<NotificationView>
+    +MarkRead(request) : void
+  }
+}
+
+package "Application" {
+  class NotificationService {
+    +ListAsync() : List<NotificationView>
+    +MarkReadAsync(ids) : void
+  }
+
+  interface ICurrentUser {
+    +UserId : Guid
+  }
+
+  interface INotificationRepository {
+    +ListUnreadAsync(userId, ids) : List<Notification>
+  }
+
+  interface INotificationQueries {
+    +ListAsync(userId) : List<NotificationView>
+  }
+
+  interface IUnitOfWork {
+    +SaveChangesAsync() : int
+  }
+}
+
+package "Infrastructure" {
+  class NotificationRepository
+  class NotificationQueries
+  class AppDbContext
+}
+
+NotificationsController --> NotificationService
+
+NotificationService --> ICurrentUser
+NotificationService --> INotificationRepository
+NotificationService --> INotificationQueries
+NotificationService --> IUnitOfWork
+
+INotificationRepository <|.. NotificationRepository
+INotificationQueries <|.. NotificationQueries
+IUnitOfWork <|.. AppDbContext
+
+@enduml

@@ -1,0 +1,381 @@
+@startuml er
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+hide circle
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+entity users {
+  * id : uuid PK
+  --
+  * email : citext UNIQUE
+  * username : citext(30) UNIQUE
+  * display_name : citext
+  * friend_code : text UNIQUE
+  photo_url : text
+  * time_zone : text
+  * settings : jsonb
+  * session_version : int
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+
+entity user_identities {
+  * id : uuid PK
+  --
+  * user_id : uuid FK
+  * provider : auth_provider
+  * subject : text
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  ..
+  UNIQUE (provider, subject)
+}
+
+entity calendar_connections {
+  * id : uuid PK
+  --
+  * user_id : uuid FK
+  * provider : calendar_provider
+  * external_account_id : text
+  * account_email : text
+  * calendar_id : text
+  * busy_calendar_ids : text[]
+  * access_token : text (encrypted)
+  * refresh_token : text (encrypted)
+  * token_expires_at : timestamptz
+  * scopes : text[]
+  * status : connection_status
+  * is_primary : boolean
+  last_synced_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  ..
+  UNIQUE (user_id, provider, external_account_id)
+}
+
+entity friendships {
+  * id : uuid PK
+  --
+  * user_low_id : uuid FK
+  * user_high_id : uuid FK
+  * requester_id : uuid
+  * status : friendship_status
+  accepted_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  ..
+  UNIQUE (user_low_id, user_high_id)
+  CHECK (user_low_id < user_high_id)
+}
+
+entity groups {
+  * id : uuid PK
+  --
+  * organizer_id : uuid FK
+  * title : text
+  description : text
+  * invite_token : text UNIQUE
+  * window_start : timestamptz
+  * window_end : timestamptz
+  * event_duration : interval
+  availability_deadline : timestamptz
+  voting_deadline : timestamptz
+  * status : group_status
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  ..
+  CHECK (window_end > window_start)
+}
+
+entity group_members {
+  * group_id : uuid PK, FK
+  * user_id : uuid PK, FK
+  --
+  * role : member_role
+  reminded_event_id : uuid
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+
+entity member_availability {
+  * id : bigint PK (identity)
+  --
+  * group_id : uuid FK
+  * user_id : uuid FK
+  * slot_start : timestamptz
+  * slot_end : timestamptz
+  ..
+  FK (group_id, user_id) -> group_members
+  CHECK (slot_end > slot_start)
+}
+
+entity invitations {
+  * id : uuid PK
+  --
+  * group_id : uuid FK
+  * email : citext
+  * status : invitation_status
+  accepted_by_user_id : uuid FK
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  ..
+  UNIQUE (group_id, email)
+}
+
+entity time_options {
+  * id : uuid PK
+  --
+  * group_id : uuid FK
+  * starts_at : timestamptz
+  * ends_at : timestamptz
+  * free_user_ids : uuid[]
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  ..
+  CHECK (ends_at > starts_at)
+}
+
+entity time_option_votes {
+  * option_id : uuid PK, FK
+  * user_id : uuid PK, FK
+  --
+  * answer : vote_answer
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+
+entity events {
+  * id : uuid PK
+  --
+  * group_id : uuid FK UNIQUE
+  * owner_id : uuid FK
+  * title : text
+  description : text
+  * starts_at : timestamptz
+  * ends_at : timestamptz
+  location : text
+  meeting_link : text
+  * status : event_status
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  ..
+  CHECK (ends_at > starts_at)
+}
+
+entity calendar_event_links {
+  * id : uuid PK
+  --
+  * event_id : uuid FK
+  * connection_id : uuid FK
+  external_event_id : text
+  * sync_status : sync_status
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  ..
+  UNIQUE (event_id, connection_id)
+}
+
+entity polls {
+  * id : uuid PK
+  --
+  * creator_id : uuid FK
+  group_id : uuid FK
+  * title : varchar(120)
+  description : text
+  deadline : timestamptz
+  * multiple_choice : boolean
+  * allow_new_options : boolean
+  closed_at : timestamptz
+  * closed_notified : boolean
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+
+entity poll_participants {
+  * poll_id : uuid PK, FK
+  * user_id : uuid PK, FK
+  --
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+
+entity poll_options {
+  * id : uuid PK
+  --
+  * poll_id : uuid FK
+  * title : varchar(80)
+  * added_by_id : uuid
+  * position : int
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+
+entity poll_votes {
+  * option_id : uuid PK, FK
+  * user_id : uuid PK, FK
+  --
+  * created_at : timestamptz
+  * updated_at : timestamptz
+}
+
+entity notifications {
+  * id : uuid PK
+  --
+  * user_id : uuid FK
+  * kind : notification_kind
+  actor_id : uuid FK
+  group_id : uuid FK
+  poll_id : uuid FK
+  read_at : timestamptz
+  * created_at : timestamptz
+  * updated_at : timestamptz
+  ..
+  INDEX (user_id, created_at)
+}
+
+package "Infrastructure tables" {
+  entity outbox_messages {
+    * id : uuid PK
+    --
+    * type : text
+    * payload : jsonb
+    * attempts : int
+    next_attempt_at : timestamptz
+    processed_at : timestamptz
+    * created_at : timestamptz
+    * updated_at : timestamptz
+    ..
+    INDEX (next_attempt_at)
+  }
+
+  entity data_protection_keys {
+    * id : int PK (identity)
+    --
+    friendly_name : text
+    xml : text
+  }
+}
+
+entity auth_provider <<enum>> {
+  google
+  development
+}
+
+entity calendar_provider <<enum>> {
+  google
+}
+
+entity connection_status <<enum>> {
+  active
+  expired
+  revoked
+}
+
+entity friendship_status <<enum>> {
+  pending
+  accepted
+}
+
+entity group_status <<enum>> {
+  planning
+  voting
+  scheduled
+  cancelled
+}
+
+entity member_role <<enum>> {
+  organizer
+  participant
+}
+
+entity invitation_status <<enum>> {
+  pending
+  sent
+  accepted
+  revoked
+}
+
+entity vote_answer <<enum>> {
+  yes
+  maybe
+  no
+}
+
+entity event_status <<enum>> {
+  confirmed
+  cancelled
+}
+
+entity sync_status <<enum>> {
+  pending
+  synced
+  failed
+}
+
+entity notification_kind <<enum>> {
+  invited
+  member_joined
+  voting_started
+  deadline_soon
+  event_confirmed
+  event_updated
+  event_cancelled
+  friend_request
+  friend_accepted
+  poll_started
+  poll_closed
+}
+
+' Users
+users ||--|{ user_identities
+users ||--o{ calendar_connections
+users ||--o{ friendships : user_low
+users ||--o{ friendships : user_high
+
+' Groups, availability, voting, events
+users ||--o{ groups : organizer\n(restrict)
+groups ||--|{ group_members
+users ||--o{ group_members
+group_members ||--o{ member_availability
+groups ||--o{ invitations
+users |o--o{ invitations : accepted_by\n(set null)
+groups ||--o{ time_options
+time_options ||--o{ time_option_votes
+users ||--o{ time_option_votes
+groups ||--o| events
+users ||--o{ events : owner\n(restrict)
+events ||--o{ calendar_event_links
+calendar_connections ||--o{ calendar_event_links
+
+' Polls and notifications
+users ||--o{ polls : creator
+groups |o--o{ polls : (set null)
+polls ||--|{ poll_participants
+users ||--o{ poll_participants
+polls ||--|{ poll_options
+poll_options ||--o{ poll_votes
+users ||--o{ poll_votes
+users ||--o{ notifications : recipient
+users |o--o{ notifications : actor\n(set null)
+groups |o--o{ notifications
+polls |o--o{ notifications
+
+' Enum types
+user_identities .. auth_provider
+calendar_connections .. calendar_provider
+calendar_connections .. connection_status
+friendships .. friendship_status
+groups .. group_status
+group_members .. member_role
+invitations .. invitation_status
+time_option_votes .. vote_answer
+events .. event_status
+calendar_event_links .. sync_status
+notifications .. notification_kind
+
+@enduml

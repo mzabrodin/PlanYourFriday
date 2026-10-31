@@ -1,0 +1,63 @@
+@startuml service-external-sign-in
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Api" {
+  class AuthenticationSetup <<static>> {
+    -SignInUserAsync(context, provider, emailVerified) : Task
+  }
+
+  class DevLoginController {
+    +Form(returnUrl, tz) : Html
+    +SignIn(form) : Redirect
+  }
+}
+
+package "Application" {
+  class ExternalSignInService {
+    +SignInAsync(login : ExternalLogin) : User
+  }
+
+  class ExternalLogin <<record>> {
+    +Provider : AuthProvider
+    +Subject : string
+    +Email : string
+    +EmailVerified : bool
+    +DisplayName : string
+    +PhotoUrl : string?
+    +TimeZone : string?
+  }
+
+  interface IUserRepository {
+    +FindByIdentityAsync(provider, subject) : User?
+    +FindByEmailAsync(email) : User?
+    +ListUsernamesStartingWithAsync(prefix) : Set<string>
+    +Add(user) : void
+  }
+
+  interface IUnitOfWork {
+    +SaveChangesAsync() : int
+  }
+}
+
+package "Infrastructure" {
+  class UserRepository
+  class AppDbContext
+}
+
+AuthenticationSetup --> ExternalSignInService : OnCreatingTicket (Google)
+DevLoginController --> ExternalSignInService
+ExternalSignInService ..> ExternalLogin
+ExternalSignInService --> IUserRepository
+ExternalSignInService --> IUnitOfWork
+
+IUserRepository <|.. UserRepository
+IUnitOfWork <|.. AppDbContext
+
+@enduml

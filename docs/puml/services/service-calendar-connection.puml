@@ -1,0 +1,120 @@
+@startuml service-calendar-connection
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide empty members
+left to right direction
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "Api" {
+  class AuthenticationSetup <<static>> {
+    -ConnectCalendarAsync(context) : Task
+  }
+
+  class CalendarConnectionsController {
+    +ConnectGoogle(returnUrl) : Challenge
+    +List() : List<CalendarConnectionView>
+    +ChooseCalendars(connectionId, request) : CalendarConnectionView
+    +Disconnect() : void
+    +ImportAvailability(groupId) : void
+  }
+}
+
+package "Application" {
+  class CalendarConnectionService {
+    +ConnectGoogleAsync(userId, grant : GoogleCalendarGrant) : void
+    +ListAsync() : List<CalendarConnectionView>
+    +ChooseCalendarsAsync(connectionId, busyCalendarIds, writeCalendarId) : CalendarConnectionView
+    +DisconnectPrimaryAsync() : void
+    +ImportAvailabilityAsync(groupId) : void
+  }
+
+  class AccountService {
+    +GetAsync() : User
+  }
+
+  class CalendarAccess {
+    +GetAccessTokenAsync(user, connection) : string
+  }
+
+  class FreeTime <<static>> {
+    +UsualSlots(window, usual, timeZone) : List<TimeRange>
+    +Subtract(slots, busy) : List<TimeRange>
+  }
+
+  interface ICurrentUser {
+    +UserId : Guid
+  }
+
+  interface IUserRepository {
+    +GetByIdAsync(id) : User?
+  }
+
+  interface IGroupRepository {
+    +GetByIdAsync(id) : Group?
+  }
+
+  interface IEventRepository {
+    +ListUpcomingForMemberAsync(userId, now) : List<Event>
+  }
+
+  interface IExternalCalendarClient {
+    +ListCalendarsAsync(accessToken) : List<ExternalCalendar>
+    +GetBusyAsync(accessToken, calendarIds, range) : List<TimeRange>
+    +SaveEventAsync(accessToken, calendarId, externalEventId, event) : string
+    +DeleteEventAsync(accessToken, calendarId, externalEventId) : void
+  }
+
+  interface ICalendarTokenClient {
+    +RefreshTokenAsync(refreshToken) : RefreshedToken
+    +RevokeAsync(token) : void
+  }
+
+  interface ITokenProtector {
+    +Protect(token) : string
+    +Unprotect(protectedToken) : string
+  }
+
+  interface IUnitOfWork {
+    +SaveChangesAsync() : int
+  }
+}
+
+package "Infrastructure" {
+  class UserRepository
+  class GroupRepository
+  class EventRepository
+  class GoogleCalendarClient
+  class GoogleTokenClient
+  class DataProtectionTokenProtector
+  class AppDbContext
+}
+
+AuthenticationSetup --> CalendarConnectionService : OnCreatingTicket (GoogleCalendar)
+CalendarConnectionsController --> CalendarConnectionService
+
+CalendarConnectionService --> ICurrentUser
+CalendarConnectionService --> AccountService
+CalendarConnectionService --> CalendarAccess
+CalendarConnectionService ..> FreeTime
+CalendarConnectionService --> IUserRepository
+CalendarConnectionService --> IGroupRepository
+CalendarConnectionService --> IEventRepository
+CalendarConnectionService --> IExternalCalendarClient
+CalendarConnectionService --> ICalendarTokenClient
+CalendarConnectionService --> ITokenProtector
+CalendarConnectionService --> IUnitOfWork
+CalendarAccess --> ICalendarTokenClient
+CalendarAccess --> ITokenProtector
+
+IUserRepository <|.. UserRepository
+IGroupRepository <|.. GroupRepository
+IEventRepository <|.. EventRepository
+IExternalCalendarClient <|.. GoogleCalendarClient
+ICalendarTokenClient <|.. GoogleTokenClient
+ITokenProtector <|.. DataProtectionTokenProtector
+IUnitOfWork <|.. AppDbContext
+
+@enduml
